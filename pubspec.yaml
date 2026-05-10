@@ -42,6 +42,7 @@ dependencies:
   path_provider: ^2.1.5
   http: ^1.6.0
   audioplayers: ^6.6.0
+  google_generative_ai: ^0.4.0
 
 dev_dependencies:
   flutter_test:

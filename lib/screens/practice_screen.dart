@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/sentence.dart';
+import '../models/word_definition.dart';
+import '../services/dictionary_service.dart';
 
 class PracticeScreen extends StatefulWidget {
   final Sentence sentence;
@@ -24,6 +26,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   bool _isRecording = false;
   bool _isLoading = false;
   Map<String, dynamic>? _resultData;
+  final DictionaryService _dictionaryService = DictionaryService();
 
   @override
   void dispose() {
@@ -33,10 +36,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
   }
 
   // NGHE MẪU (Đảm bảo IP đúng)
-  Future<void> _playSample() async {
+  Future<void> _playSample({String? text}) async {
+    final textToPlay = text ?? widget.sentence.text;
+    if (textToPlay.trim().isEmpty) return;
+
     setState(() => _isLoading = true);
     try {
-      final url = Uri.parse('https://vanduc14-vku-pronunciation-api.hf.space/api/v1/tts?text=${widget.sentence.text}');
+      final url = Uri.parse('https://vanduc14-vku-pronunciation-api.hf.space/api/v1/tts?text=$textToPlay');
       await _audioPlayer.play(UrlSource(url.toString()));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi TTS: $e')));
@@ -233,10 +239,40 @@ class _PracticeScreenState extends State<PracticeScreen> {
                   children: [
                     const Text('Câu cần đọc', style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
-                    Text(
+                    SelectableText(
                       widget.sentence.text.toLowerCase(),
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50), height: 1.4),
+                      contextMenuBuilder: (context, editableTextState) {
+                        final List<ContextMenuButtonItem> buttonItems = editableTextState.contextMenuButtonItems;
+                        buttonItems.insert(
+                          0,
+                          ContextMenuButtonItem(
+                            label: 'Nghe đoạn này',
+                            onPressed: () {
+                              final String selectedText = editableTextState.textEditingValue.selection.textInside(editableTextState.textEditingValue.text);
+                              _playSample(text: selectedText);
+                              editableTextState.hideToolbar();
+                            },
+                          ),
+                        );
+                        // Nút Tra từ điển
+                        buttonItems.insert(
+                          1,
+                          ContextMenuButtonItem(
+                            label: 'Tra từ điển',
+                            onPressed: () {
+                              final String selectedText = editableTextState.textEditingValue.selection.textInside(editableTextState.textEditingValue.text);
+                              _showDefinition(selectedText);
+                              editableTextState.hideToolbar();
+                            },
+                          ),
+                        );
+                        return AdaptiveTextSelectionToolbar.buttonItems(
+                          anchors: editableTextState.contextMenuAnchors,
+                          buttonItems: buttonItems,
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -270,6 +306,83 @@ class _PracticeScreenState extends State<PracticeScreen> {
               const SizedBox(height: 20),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showDefinition(String text) async {
+    if (text.trim().isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: FutureBuilder<WordDefinition>(
+          future: _dictionaryService.getDefinition(text),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 200,
+                child: Center(child: CircularProgressIndicator(color: Color(0xFF2C3E50))),
+              );
+            }
+
+            if (snapshot.hasError || !snapshot.hasData) {
+              return const SizedBox(
+                height: 100,
+                child: Center(child: Text('Lỗi khi tải định nghĩa', style: TextStyle(color: Colors.red))),
+              );
+            }
+
+            final data = snapshot.data!;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            data.word.toUpperCase(),
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+                          ),
+                          if (data.phonetic.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              data.phonetic,
+                              style: const TextStyle(fontSize: 18, color: Colors.blueAccent, fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.volume_up_rounded, color: Colors.blue, size: 30),
+                      onPressed: () => _playSample(text: data.word),
+                    ),
+                  ],
+                ),
+                const Divider(height: 32),
+                const Text('Định nghĩa:', style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(
+                  data.definition,
+                  style: const TextStyle(fontSize: 18, color: Color(0xFF34495E), height: 1.5),
+                ),
+                const SizedBox(height: 30),
+              ],
+            );
+          },
         ),
       ),
     );
