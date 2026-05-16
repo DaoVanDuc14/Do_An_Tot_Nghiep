@@ -17,6 +17,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _nameCtrl = TextEditingController();
   bool _saving = false;
   bool _uploadingAvatar = false;
+  bool _isEditingName = false;
 
   @override
   void initState() {
@@ -39,7 +40,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) setState(() {
+        _saving = false;
+        _isEditingName = false;
+      });
     }
   }
 
@@ -100,28 +104,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ])),
-          const SizedBox(height: 8),
-          Center(child: Text(user?.email ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13))),
+          const SizedBox(height: 12),
+          Center(child: Text(user?.displayName ?? 'Người dùng', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary))),
+          const SizedBox(height: 4),
+          Center(child: Text(user?.email ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 14))),
           const SizedBox(height: 28),
 
           // Name edit
-          _sectionTitle('Thông tin cá nhân'),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _nameCtrl,
-            decoration: InputDecoration(
-              labelText: 'Tên hiển thị',
-              prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true, fillColor: AppColors.surface,
+          if (_isEditingName) ...[
+            TextField(
+              controller: _nameCtrl,
+              decoration: InputDecoration(
+                labelText: 'Tên hiển thị',
+                prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true, fillColor: AppColors.surface,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(width: double.infinity, height: 48, child: ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: _saving ? null : _saveName,
-            child: _saving ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Lưu thay đổi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          )),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: _saving ? null : () => setState(() {
+                    _isEditingName = false;
+                    _nameCtrl.text = user?.displayName ?? '';
+                  }),
+                  child: const Text('Hủy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: _saving ? null : _saveName,
+                  child: _saving ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Lưu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ]),
+          ] else ...[
+            SizedBox(width: double.infinity, height: 48, child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: () => setState(() => _isEditingName = true),
+              icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+              label: const Text('Điều chỉnh thông tin tài khoản', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            )),
+          ],
           const SizedBox(height: 28),
 
           // Logout

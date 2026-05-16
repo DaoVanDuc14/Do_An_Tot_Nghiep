@@ -70,9 +70,9 @@ class FirestoreService {
 
   /// Cộng điểm cho user.
   static Future<void> addScore(String uid, int points) async {
-    await _db.collection(_users).doc(uid).update({
+    await _db.collection(_users).doc(uid).set({
       'totalScore': FieldValue.increment(points),
-    });
+    }, SetOptions(merge: true));
   }
 
   /// Lấy tất cả users (dành cho Admin).
@@ -229,6 +229,16 @@ class FirestoreService {
     required int timeFinished, // giây
     String testGroupId = 'general',
   }) async {
+    final prevQuery = await _db.collection(_testResults)
+        .where('userId', isEqualTo: uid)
+        .where('testGroupId', isEqualTo: testGroupId)
+        .get();
+    int prevMax = 0;
+    for (var doc in prevQuery.docs) {
+      final s = doc.data()['totalScore'] as int? ?? 0;
+      if (s > prevMax) prevMax = s;
+    }
+
     await _db.collection(_testResults).add({
       'userId': uid,           // match Firebase: userId
       'name': name,            // extra: dùng cho leaderboard
@@ -239,8 +249,10 @@ class FirestoreService {
       'testGroupId': testGroupId,   // match Firebase: testGroupId
       'createdAt': Timestamp.now(), // match Firebase: createdAt
     });
-    // Cộng điểm vào user profile
-    await addScore(uid, totalScore);
+    // Cộng điểm phần chênh lệch (nếu điểm mới cao hơn)
+    if (totalScore > prevMax) {
+      await addScore(uid, totalScore - prevMax);
+    }
   }
 
   static Stream<QuerySnapshot> leaderboardStream({int limit = 50}) =>
@@ -258,7 +270,7 @@ class FirestoreService {
   // ─── USER PROFILE ─────────────────────────────────────────
 
   static Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
-    await _db.collection(_users).doc(uid).update(data);
+    await _db.collection(_users).doc(uid).set(data, SetOptions(merge: true));
   }
 
   // ─── EXAM PAPERS ──────────────────────────────
@@ -349,6 +361,16 @@ class FirestoreService {
     String? name,
     bool isAutoSubmit = false,
   }) async {
+    final prevQuery = await _db.collection(_testResults)
+        .where('userId', isEqualTo: userId)
+        .where('examPaperId', isEqualTo: examPaperId)
+        .get();
+    int prevMax = 0;
+    for (var doc in prevQuery.docs) {
+      final s = doc.data()['score'] as int? ?? 0;
+      if (s > prevMax) prevMax = s;
+    }
+
     final now = Timestamp.now();
     await _db.collection(_testResults).add({
       'userId': userId,
@@ -364,7 +386,9 @@ class FirestoreService {
       'completedAt': now,
       'createdAt': now, // Backward compatibility
     });
-    await addScore(userId, score);
+    if (score > prevMax) {
+      await addScore(userId, score - prevMax);
+    }
   }
 
   /// Lưu kết quả bài thi đơn giản (backward compat).
@@ -374,6 +398,16 @@ class FirestoreService {
     required int score,
     required int timeTakenSeconds,
   }) async {
+    final prevQuery = await _db.collection(_testResults)
+        .where('userId', isEqualTo: userId)
+        .where('examPaperId', isEqualTo: examPaperId)
+        .get();
+    int prevMax = 0;
+    for (var doc in prevQuery.docs) {
+      final s = doc.data()['score'] as int? ?? 0;
+      if (s > prevMax) prevMax = s;
+    }
+
     await _db.collection(_testResults).add({
       'userId': userId,
       'examPaperId': examPaperId,
@@ -381,7 +415,9 @@ class FirestoreService {
       'timeTaken_seconds': timeTakenSeconds,
       'completedAt': Timestamp.now(),
     });
-    await addScore(userId, score);
+    if (score > prevMax) {
+      await addScore(userId, score - prevMax);
+    }
   }
 
   static Stream<QuerySnapshot> myExamResultsStream(String uid) => _db
@@ -390,10 +426,9 @@ class FirestoreService {
       .orderBy('completedAt', descending: true)
       .snapshots();
 
-  static Stream<QuerySnapshot> examLeaderboardStream(String examPaperId, {int limit = 50}) => _db
+  static Stream<QuerySnapshot> examLeaderboardStream(String examPaperId, {int limit = 100}) => _db
       .collection(_testResults)
       .where('examPaperId', isEqualTo: examPaperId)
-      .orderBy('score', descending: true)
       .limit(limit)
       .snapshots();
 }

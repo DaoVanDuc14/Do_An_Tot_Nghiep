@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import thêm auth
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/auth_wrapper.dart';
+import 'features/auth/screens/auth_wrapper.dart';
 
 // Xóa import thừa
 

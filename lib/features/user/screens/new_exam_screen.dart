@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exam_paper.dart';
@@ -25,17 +26,38 @@ class _NewExamScreenState extends State<NewExamScreen> {
   bool _started = false;
   Timer? _timer;
   late int _remaining;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isAudioPlaying = false;
 
   @override
   void initState() {
     super.initState();
     _remaining = widget.paper.durationMinutes * 60;
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) setState(() => _isAudioPlaying = false);
+    });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _playQuestionAudio(String text) async {
+    if (_isAudioPlaying) {
+      await _audioPlayer.stop();
+      if (mounted) setState(() => _isAudioPlaying = false);
+      return;
+    }
+    if (mounted) setState(() => _isAudioPlaying = true);
+    try {
+      final url = 'https://vanduc14-vku-pronunciation-api.hf.space/api/v1/tts?text=${Uri.encodeComponent(text)}';
+      await _audioPlayer.play(UrlSource(url));
+    } catch (e) {
+      if (mounted) setState(() => _isAudioPlaying = false);
+    }
   }
 
   // ── Timer ──────────────────────────────────────
@@ -58,6 +80,7 @@ class _NewExamScreenState extends State<NewExamScreen> {
   // ── MCQ ────────────────────────────────────────
 
   void _selectMcq(ExamQuestion q, String option) {
+    if (_answers.containsKey(q.id)) return; // Chỉ cho phép chọn đáp án 1 lần
     setState(() {
       _answers[q.id] = {
         'type': 'mcq',
@@ -282,7 +305,7 @@ class _NewExamScreenState extends State<NewExamScreen> {
                   decoration: BoxDecoration(
                       color: (isMcq ? AppColors.accent : AppColors.primary).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20)),
-                  child: Text(isMcq ? '🎧 Trắc nghiệm' : '🎙 Phát âm',
+                  child: Text(isMcq ? '🎧 Luyện nghe' : '🎙 Phát âm',
                       style: TextStyle(color: isMcq ? AppColors.accent : AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
                 ),
                 const SizedBox(height: 14),
@@ -292,8 +315,31 @@ class _NewExamScreenState extends State<NewExamScreen> {
 
                 // Nội dung
                 if (isMcq) ...[
-                  Text(q.targetText, textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary, height: 1.4)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Column(
+                      children: [
+                        const Text('Nhấn vào nút bên dưới để nghe âm thanh', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: () => _playQuestionAudio(q.targetText),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: 80, height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _isAudioPlaying ? AppColors.accent : AppColors.primary,
+                              boxShadow: [BoxShadow(color: (_isAudioPlaying ? AppColors.accent : AppColors.primary).withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+                            ),
+                            child: Icon(
+                              _isAudioPlaying ? Icons.volume_up_rounded : Icons.play_arrow_rounded,
+                              color: Colors.white, size: 40,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ] else ...[
                   // Pronunciation: hiển thị targetText nổi bật
                   Container(
@@ -379,12 +425,43 @@ class _NewExamScreenState extends State<NewExamScreen> {
   }
 
   List<Widget> _buildMcqOptions(ExamQuestion q) {
-    final selected = _answers[q.id]?['selected'] as String?;
+    final ansData = _answers[q.id];
+    final hasAnswered = ansData != null;
+    final selected = ansData?['selected'] as String?;
+    final correctAns = q.correctAnswer.trim().toLowerCase();
+
     return q.options.asMap().entries.map((e) {
       final i = e.key;
       final opt = e.value;
       final letter = String.fromCharCode(65 + i);
+      
       final isSelected = selected == opt;
+      final isThisOptionCorrect = opt.trim().toLowerCase() == correctAns;
+
+      Color bgColor = AppColors.surface;
+      Color borderColor = Colors.grey.shade200;
+      Color textColor = AppColors.textPrimary;
+      IconData? icon;
+      Color iconColor = Colors.transparent;
+
+      if (hasAnswered) {
+        if (isThisOptionCorrect) {
+          bgColor = Colors.green.shade50;
+          borderColor = Colors.green;
+          textColor = Colors.green.shade700;
+          icon = Icons.check_circle_rounded;
+          iconColor = Colors.green;
+        } else if (isSelected) {
+          bgColor = Colors.red.shade50;
+          borderColor = Colors.red;
+          textColor = Colors.red.shade700;
+          icon = Icons.cancel_rounded;
+          iconColor = Colors.red;
+        } else {
+          textColor = Colors.grey;
+        }
+      }
+
       return GestureDetector(
         onTap: () => _selectMcq(q, opt),
         child: AnimatedContainer(
@@ -392,24 +469,24 @@ class _NewExamScreenState extends State<NewExamScreen> {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withValues(alpha: 0.08) : AppColors.surface,
+            color: bgColor,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade200, width: isSelected ? 2 : 1.5),
+            border: Border.all(color: borderColor, width: 1.5),
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
           ),
           child: Row(children: [
             Container(width: 32, height: 32,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isSelected ? AppColors.primary : Colors.grey.shade100,
-                  border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade300),
+                  color: hasAnswered && (isThisOptionCorrect || isSelected) ? iconColor : Colors.grey.shade100,
+                  border: Border.all(color: hasAnswered && (isThisOptionCorrect || isSelected) ? iconColor : Colors.grey.shade300),
                 ),
                 child: Center(child: Text(letter,
-                    style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.grey.shade600)))),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: hasAnswered && (isThisOptionCorrect || isSelected) ? Colors.white : Colors.grey.shade600)))),
             const SizedBox(width: 14),
-            Expanded(child: Text(opt, style: TextStyle(fontSize: 15, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? AppColors.primary : AppColors.textPrimary))),
-            if (isSelected) const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 22),
+            Expanded(child: Text(opt, style: TextStyle(fontSize: 15, fontWeight: (hasAnswered && (isThisOptionCorrect || isSelected)) ? FontWeight.bold : FontWeight.normal,
+                color: textColor))),
+            if (icon != null) Icon(icon, color: iconColor, size: 22),
           ]),
         ),
       );

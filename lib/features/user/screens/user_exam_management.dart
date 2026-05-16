@@ -248,7 +248,6 @@ class _UserExamQuestionsScreenState extends State<UserExamQuestionsScreen> {
   void _showQuestionDialog(BuildContext context, {ExamQuestion? q}) {
     final isEdit = q != null;
     final targetCtrl = TextEditingController(text: isEdit ? q.targetText : '');
-    final correctCtrl = TextEditingController(text: isEdit ? q.correctAnswer : '');
     final optCtrls = isEdit && q.options.isNotEmpty
         ? q.options.map((o) => TextEditingController(text: o)).toList()
         : List.generate(4, (_) => TextEditingController());
@@ -272,10 +271,6 @@ class _UserExamQuestionsScreenState extends State<UserExamQuestionsScreen> {
               ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Cần ít nhất 2 lựa chọn!'), backgroundColor: Colors.orange));
               return;
             }
-            if (correctCtrl.text.trim().isEmpty) {
-              ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Vui lòng nhập đáp án đúng!'), backgroundColor: Colors.orange));
-              return;
-            }
           }
           setD(() => saving = true);
           try {
@@ -295,7 +290,7 @@ class _UserExamQuestionsScreenState extends State<UserExamQuestionsScreen> {
               'type': selType == ExamQuestionType.pronunciation ? 'pronunciation' : 'mcq',
               'targetText': target,
               'options': opts,
-              'correctAnswer': selType == ExamQuestionType.mcq ? correctCtrl.text.trim() : '',
+              'correctAnswer': selType == ExamQuestionType.mcq ? target : '',
               'orderIndex': orderIndex,
             };
             if (isEdit) {
@@ -325,7 +320,7 @@ class _UserExamQuestionsScreenState extends State<UserExamQuestionsScreen> {
             const Text('Loại câu hỏi:', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
             const SizedBox(height: 8),
             Row(children: [
-              _typeChip(setD, 'Trắc nghiệm', ExamQuestionType.mcq, selType, AppColors.accent,
+              _typeChip(setD, 'Luyện nghe', ExamQuestionType.mcq, selType, AppColors.accent,
                   () => setD(() => selType = ExamQuestionType.mcq)),
               const SizedBox(width: 10),
               _typeChip(setD, 'Phát âm', ExamQuestionType.pronunciation, selType, AppColors.primary,
@@ -336,8 +331,8 @@ class _UserExamQuestionsScreenState extends State<UserExamQuestionsScreen> {
             // Nội dung câu hỏi
             TextField(controller: targetCtrl,
                 decoration: InputDecoration(
-                  labelText: selType == ExamQuestionType.pronunciation ? 'Câu cần đọc (VD: Xin chào)' : 'Nội dung câu hỏi',
-                  helperText: selType == ExamQuestionType.pronunciation ? 'Người thi sẽ thu âm đọc câu này' : null,
+                  labelText: selType == ExamQuestionType.pronunciation ? 'Câu cần đọc (VD: Xin chào)' : 'Nội dung câu nói (AI sẽ đọc lên)',
+                  helperText: selType == ExamQuestionType.pronunciation ? 'Người thi sẽ thu âm đọc câu này' : 'Văn bản bị ẩn, người thi sẽ nghe âm thanh',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
 
             // MCQ fields
@@ -351,13 +346,6 @@ class _UserExamQuestionsScreenState extends State<UserExamQuestionsScreen> {
                       decoration: InputDecoration(labelText: 'Lựa chọn ${String.fromCharCode(65 + i)}',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))))),
               const SizedBox(height: 6),
-              TextField(controller: correctCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Đáp án đúng',
-                    helperText: 'Nhập chính xác nội dung đáp án đúng',
-                    prefixIcon: const Icon(Icons.check_circle_outline, color: Colors.green),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  )),
             ],
 
             // Pronunciation info
@@ -476,7 +464,7 @@ class _UserExamQuestionsScreenState extends State<UserExamQuestionsScreen> {
                     child: Center(child: Text('${i + 1}', style: TextStyle(fontWeight: FontWeight.bold, color: isPron ? AppColors.primary : AppColors.accent)))),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(isPron ? '🎙 Phát âm' : '🎧 Trắc nghiệm', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isPron ? AppColors.primary : AppColors.accent)),
+                    Text(isPron ? '🎙 Phát âm' : '🎧 Luyện nghe', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isPron ? AppColors.primary : AppColors.accent)),
                     Text(q.targetText, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
                     if (!isPron && q.correctAnswer.isNotEmpty)
                       Text('Đáp án: ${q.correctAnswer}', style: const TextStyle(fontSize: 11, color: Colors.green)),

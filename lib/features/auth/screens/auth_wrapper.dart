@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../core/constants/app_colors.dart';
-import '../admin/screens/admin_dashboard.dart';
-import '../user/screens/home_screen.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../admin/screens/admin_dashboard.dart';
+import '../../user/screens/home_screen.dart';
 import 'auth_screen.dart';
 import 'verify_email_screen.dart';
 
