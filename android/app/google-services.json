@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "291922863219",
+    "project_id": "vku-vietnamese-learning",
+    "storage_bucket": "vku-vietnamese-learning.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291922863219:android:62fe401890c91080dff606",
+        "android_client_info": {
+          "package_name": "com.vku.duclab.vku_learning_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "291922863219-9k9rulfaildrk17fkfr26ii9p5rhd87h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDanXBW61wCUM973CKDMTAy52poB-R5Icc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "291922863219-9k9rulfaildrk17fkfr26ii9p5rhd87h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
