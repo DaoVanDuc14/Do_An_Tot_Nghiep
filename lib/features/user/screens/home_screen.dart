@@ -526,11 +526,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           : IconButton(
                               icon: Container(
                                 width: 36, height: 36,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(colors: AppColors.primaryGradient),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.person_outlined, color: Colors.white, size: 20),
+                                child: Center(
+                                  child: Text(
+                                    (FirebaseAuth.instance.currentUser?.displayName?.isNotEmpty == true
+                                        ? FirebaseAuth.instance.currentUser!.displayName![0]
+                                        : FirebaseAuth.instance.currentUser?.email?[0] ?? 'V').toUpperCase(),
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                                  ),
+                                ),
                               ),
                               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
                               tooltip: 'Hồ sơ',
@@ -550,14 +557,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 cursorColor: AppColors.primary,
                                 onChanged: (v) => setState(() => _searchQuery = v),
                               )
-                            : const Text(
-                                'Học Tiếng Việt AI',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                  letterSpacing: 0.3,
+                            : ShaderMask(
+                                shaderCallback: (bounds) => const LinearGradient(
+                                  colors: AppColors.primaryGradient,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ).createShader(bounds),
+                                child: const Text(
+                                  'VGo',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 1.2,
+                                  ),
                                 ),
                               ),
                       ),
@@ -580,7 +594,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   tabs: const [
                     Tab(text: 'Cá nhân'),
                     Tab(text: 'Khám phá'),
-                    Tab(icon: Icon(Icons.assignment_rounded, size: 18), text: 'Đề Thi'),
+                    Tab(text: 'Đề thi'),
                   ],
                 ),
               ],

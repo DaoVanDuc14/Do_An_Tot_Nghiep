@@ -133,53 +133,69 @@ class _AdminExamManagementState extends State<AdminExamManagement> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(children: [
-                    Container(
-                      width: 48, height: 48,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: p.isPublished
-                            ? AppColors.primaryGradient
-                            : [Colors.grey, Colors.blueGrey]),
-                        borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.assignment_rounded, color: Colors.white, size: 24)),
-                    const SizedBox(width: 12),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
-                        Flexible(child: Text(p.title,
-                            style: TextStyle(fontWeight: FontWeight.bold,
-                                color: p.isPublished ? AppColors.primary : Colors.grey))),
-                        const SizedBox(width: 6),
-                        Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: p.isPublished ? Colors.green.shade50 : Colors.orange.shade100,
-                              borderRadius: BorderRadius.circular(6)),
-                            child: Text(p.isPublished ? 'Xuất bản' : 'Nháp',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold,
-                                    color: p.isPublished ? Colors.green : Colors.orange))),
-                      ]),
-                      const SizedBox(height: 2),
-                      Text('👤 ${p.creatorName.isNotEmpty ? p.creatorName : "Không rõ"}  ·  ⏱ ${p.durationMinutes} phút',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                    ])),
-                    Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(
-                        icon: const Icon(Icons.bar_chart_rounded, color: Colors.blue),
-                        tooltip: 'Xem kết quả',
-                        onPressed: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => AdminExamResultsScreen(examPaperId: p.id, examTitle: p.title))),
-                      ),
-                      IconButton(
-                        icon: Icon(p.isPublished ? Icons.unpublished_outlined : Icons.publish_outlined,
-                            color: p.isPublished ? Colors.orange : Colors.green),
-                        tooltip: p.isPublished ? 'Bỏ xuất bản' : 'Xuất bản',
-                        onPressed: () => _togglePublished(context, p),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                        tooltip: 'Xóa đề thi',
-                        onPressed: () => _confirmDelete(context, p),
-                      ),
+                  child: Column(children: [
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Container(
+                        width: 48, height: 48,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: p.isPublished
+                              ? AppColors.primaryGradient
+                              : [Colors.grey, Colors.blueGrey]),
+                          borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.assignment_rounded, color: Colors.white, size: 24)),
+                      const SizedBox(width: 12),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Expanded(
+                            child: Text(p.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15,
+                                    color: p.isPublished ? AppColors.primary : Colors.grey))),
+                          const SizedBox(width: 8),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: p.isPublished ? Colors.green.shade50 : Colors.orange.shade100,
+                                borderRadius: BorderRadius.circular(8)),
+                              child: Text(p.isPublished ? 'Xuất bản' : 'Nháp',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
+                                      color: p.isPublished ? Colors.green : Colors.orange))),
+                        ]),
+                        const SizedBox(height: 6),
+                        Text('👤 ${p.creatorName.isNotEmpty ? p.creatorName : "Không rõ"}  ·  ⏱ ${p.durationMinutes} phút',
+                            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      ])),
                     ]),
+                    const SizedBox(height: 12),
+                    const Divider(height: 1, thickness: 1, color: Colors.black12),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      alignment: WrapAlignment.spaceEvenly,
+                      spacing: 4,
+                      children: [
+                        TextButton.icon(
+                          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+                          icon: const Icon(Icons.bar_chart_rounded, color: Colors.blue, size: 18),
+                          label: const Text('Kết quả', style: TextStyle(color: Colors.blue, fontSize: 13)),
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => AdminExamResultsScreen(examPaperId: p.id, examTitle: p.title))),
+                        ),
+                        TextButton.icon(
+                          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+                          icon: Icon(p.isPublished ? Icons.unpublished_outlined : Icons.publish_outlined,
+                              color: p.isPublished ? Colors.orange : Colors.green, size: 18),
+                          label: Text(p.isPublished ? 'Bỏ xuất bản' : 'Xuất bản',
+                              style: TextStyle(color: p.isPublished ? Colors.orange : Colors.green, fontSize: 13)),
+                          onPressed: () => _togglePublished(context, p),
+                        ),
+                        TextButton.icon(
+                          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                          label: const Text('Xóa', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                          onPressed: () => _confirmDelete(context, p),
+                        ),
+                      ],
+                    ),
                   ]),
                 ),
               );

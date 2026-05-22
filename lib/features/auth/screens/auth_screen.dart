@@ -276,28 +276,12 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Logo
-        Container(
-          width: 88,
-          height: 88,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Image.asset(
-              'lib/data/images/Logo.png',
-              fit: BoxFit.cover,
-            ),
-          ),
+        // Logo (trong suốt, không viền trắng)
+        Image.asset(
+          'lib/data/images/logo_khong_nen.png',
+          width: 120,
+          height: 120,
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: 16),
         Text(

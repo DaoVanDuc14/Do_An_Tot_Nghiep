@@ -15,7 +15,7 @@ class AdminDashboard extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        title: const Text('Bảng điều khiển Admin'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [IconButton(icon: const Icon(Icons.logout_rounded, color: Colors.redAccent), tooltip: 'Đăng xuất', onPressed: () async => await FirebaseAuth.instance.signOut())],
@@ -39,13 +39,13 @@ class AdminDashboard extends StatelessWidget {
 
           // Stats row
           Row(children: [
-            Expanded(child: _statCard('Topics', Icons.menu_book_rounded, 'topics', AppColors.primary)),
+            Expanded(child: _statCard('Chủ đề', Icons.menu_book_rounded, 'topics', AppColors.primary)),
             const SizedBox(width: 12),
             Expanded(child: _statCard('Đề Thi', Icons.assignment_rounded, 'exam_papers', AppColors.accent)),
           ]),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: _statCard('Users', Icons.people_alt_rounded, 'users', const Color(0xFF8E54E9))),
+            Expanded(child: _statCard('Người dùng', Icons.people_alt_rounded, 'users', const Color(0xFF8E54E9))),
           ]),
           const SizedBox(height: 28),
 

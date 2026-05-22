@@ -19,9 +19,9 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _bgController;
   late AnimationController _logoController;
   late AnimationController _textController;
-  late AnimationController _loaderController;
+
   late AnimationController _particleController;
-  late AnimationController _shimmerController;
+
   late AnimationController _pulseController;
 
   // ─── Animations ───────────────────────────────────────────
@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<Offset> _titleSlide;
   late Animation<double> _taglineFade;
   late Animation<Offset> _taglineSlide;
-  late Animation<double> _loaderFade;
+
   late Animation<double> _pulseAnimation;
 
   // Particles
@@ -101,15 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
       curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
     ));
 
-    // ── Loader ──
-    _loaderController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _loaderFade = CurvedAnimation(
-      parent: _loaderController,
-      curve: Curves.easeIn,
-    );
+
 
     // ── Particles ──
     _particleController = AnimationController(
@@ -118,11 +110,7 @@ class _SplashScreenState extends State<SplashScreen>
     )..repeat();
     _particles = List.generate(25, (_) => _Particle.random());
 
-    // ── Shimmer on logo ──
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    )..repeat();
+
 
     // ── Pulse glow on logo ──
     _pulseController = AnimationController(
@@ -147,12 +135,7 @@ class _SplashScreenState extends State<SplashScreen>
     // 2. Text slides up
     _textController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    // 3. Loader appears
-    _loaderController.forward();
-
-    // 4. Đợi đủ 2.5s tổng cộng rồi callback
+    // 3. Đợi đủ 2.5s tổng cộng rồi callback
     await Future.delayed(const Duration(milliseconds: 1700));
     widget.onComplete?.call();
   }
@@ -162,9 +145,9 @@ class _SplashScreenState extends State<SplashScreen>
     _bgController.dispose();
     _logoController.dispose();
     _textController.dispose();
-    _loaderController.dispose();
+
     _particleController.dispose();
-    _shimmerController.dispose();
+
     _pulseController.dispose();
     super.dispose();
   }
@@ -210,9 +193,6 @@ class _SplashScreenState extends State<SplashScreen>
                     _buildTagline(),
 
                     const Spacer(flex: 2),
-
-                    // ── Loading indicator ──
-                    _buildLoader(),
 
                     const SizedBox(height: 48),
                   ],
@@ -280,7 +260,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   // ════════════════════════════════════════════════════════════
-  // Logo
+  // Logo — hiển thị Logo.png rõ ràng bên trong khung bo góc
   // ════════════════════════════════════════════════════════════
   Widget _buildAnimatedLogo() {
     return SlideTransition(
@@ -290,14 +270,13 @@ class _SplashScreenState extends State<SplashScreen>
         child: ScaleTransition(
           scale: _logoScale,
           child: AnimatedBuilder(
-            animation: Listenable.merge([_shimmerController, _pulseAnimation]),
+            animation: _pulseAnimation,
             builder: (context, child) {
               return Container(
-                width: 140,
-                height: 140,
+                width: 150,
+                height: 150,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primaryLight.withValues(alpha: _pulseAnimation.value),
@@ -312,43 +291,14 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ],
                 ),
-                child: Stack(
-                  children: [
-                    // Logo image
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
-                      child: Image.asset(
-                        'lib/data/images/Logo.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    // Shimmer overlay
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
-                      child: ShaderMask(
-                        shaderCallback: (bounds) {
-                          final shimmerPos =
-                              _shimmerController.value * 2.0 - 0.5;
-                          return LinearGradient(
-                            begin: Alignment(-1.0 + shimmerPos * 3, -0.3),
-                            end: Alignment(1.0 + shimmerPos * 3, 0.3),
-                            colors: const [
-                              Color(0x00FFFFFF),
-                              Color(0x33FFFFFF),
-                              Color(0x00FFFFFF),
-                            ],
-                            stops: const [0.0, 0.5, 1.0],
-                          ).createShader(bounds);
-                        },
-                        blendMode: BlendMode.srcATop,
-                        child: Container(
-                          width: 140,
-                          height: 140,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image.asset(
+                    'lib/data/images/Logo.png',
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               );
             },
@@ -407,35 +357,7 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════
-  // Loader
-  // ════════════════════════════════════════════════════════════
-  Widget _buildLoader() {
-    return FadeTransition(
-      opacity: _loaderFade,
-      child: Column(
-        children: [
-          SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(
-              color: Colors.white.withValues(alpha: 0.7),
-              strokeWidth: 2.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Đang tải...',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.5),
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 }
 
 // ════════════════════════════════════════════════════════════════

@@ -9,7 +9,16 @@ import 'auth_screen.dart';
 import 'verify_email_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({super.key});
+  final User? initialUser;
+  final String initialRole;
+  final bool hasInitialData;
+
+  const AuthWrapper({
+    super.key,
+    this.initialUser,
+    this.initialRole = 'user',
+    this.hasInitialData = false,
+  });
 
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
@@ -26,6 +35,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
+    if (widget.hasInitialData) {
+      _user = widget.initialUser;
+      _role = widget.initialRole;
+      _loading = false;
+    }
     _authSub = FirebaseAuth.instance.userChanges().listen(_onAuthChanged);
   }
 
@@ -85,47 +99,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Widget _buildLoadingScreen() {
-    return Scaffold(
+    // Nền navy đậm khớp với splash, tránh flash trắng
+    return const Scaffold(
       backgroundColor: AppColors.primaryDark,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo nhỏ
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryLight.withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.asset(
-                  'lib/data/images/Logo.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                color: Colors.white.withValues(alpha: 0.7),
-                strokeWidth: 2.5,
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: SizedBox.shrink(),
     );
   }
 }
