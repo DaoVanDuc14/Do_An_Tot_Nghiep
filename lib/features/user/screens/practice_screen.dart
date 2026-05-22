@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/sentence.dart';
@@ -95,18 +96,24 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.volume_up_rounded, color: Colors.blue, size: 30),
-                      onPressed: () => _playSample(data.word),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.volume_up_rounded, color: AppColors.primary, size: 28),
+                        onPressed: () => _playSample(data.word),
+                      ),
                     ),
                   ],
                 ),
                 const Divider(height: 32),
-                const Text('Định nghĩa:', style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.bold)),
+                const Text('Định nghĩa:', style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Text(
                   data.definition,
-                  style: const TextStyle(fontSize: 18, color: Color(0xFF34495E), height: 1.5),
+                  style: const TextStyle(fontSize: 18, color: AppColors.textPrimary, height: 1.5),
                 ),
                 const SizedBox(height: 30),
               ],
@@ -121,74 +128,121 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Luyện Phát Âm'),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.primary,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: Colors.grey[200], height: 1),
-        ),
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(24),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          // Câu cần đọc
-          _card(child: Column(children: [
-            const Text('Câu cần đọc',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            SelectableText(
-              widget.sentence.text.toLowerCase(),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary, height: 1.4),
-              contextMenuBuilder: (context, editableTextState) {
-                final List<ContextMenuButtonItem> buttonItems = editableTextState.contextMenuButtonItems;
-                buttonItems.insert(
-                  0,
-                  ContextMenuButtonItem(
-                    label: 'Nghe đoạn này',
-                    onPressed: () {
-                      final String selectedText = editableTextState.textEditingValue.selection.textInside(editableTextState.textEditingValue.text);
-                      _playSample(selectedText);
-                      editableTextState.hideToolbar();
-                    },
-                  ),
-                );
-                buttonItems.insert(
-                  1,
-                  ContextMenuButtonItem(
-                    label: 'Tra từ điển',
-                    onPressed: () {
-                      final String selectedText = editableTextState.textEditingValue.selection.textInside(editableTextState.textEditingValue.text);
-                      _showDefinition(selectedText);
-                      editableTextState.hideToolbar();
-                    },
-                  ),
-                );
-                return AdaptiveTextSelectionToolbar.buttonItems(
-                  anchors: editableTextState.contextMenuAnchors,
-                  buttonItems: buttonItems,
-                );
-              },
+      body: Column(
+        children: [
+          // ── Gradient Header ──
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: AppColors.headerGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-          ])),
-          const SizedBox(height: 20),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Luyện Phát Âm',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
-          // Kết quả & thu âm
-          _card(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Kết quả nhận diện',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 20),
-            PronunciationRecorderWidget(
-              targetText: widget.sentence.text,
-              recordId: 'practice_${widget.sentence.id}',
-              showListenSample: true,
-              onResult: (result) => _saveProgress(result, widget.sentence),
+          // ── Content ──
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                // Câu cần đọc
+                _card(
+                  child: Column(children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text('Câu cần đọc',
+                          style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(height: 16),
+                    SelectableText(
+                      widget.sentence.text.toLowerCase(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary, height: 1.5),
+                      contextMenuBuilder: (context, editableTextState) {
+                        final List<ContextMenuButtonItem> buttonItems = editableTextState.contextMenuButtonItems;
+                        buttonItems.insert(
+                          0,
+                          ContextMenuButtonItem(
+                            label: 'Nghe đoạn này',
+                            onPressed: () {
+                              final String selectedText = editableTextState.textEditingValue.selection.textInside(editableTextState.textEditingValue.text);
+                              _playSample(selectedText);
+                              editableTextState.hideToolbar();
+                            },
+                          ),
+                        );
+                        buttonItems.insert(
+                          1,
+                          ContextMenuButtonItem(
+                            label: 'Tra từ điển',
+                            onPressed: () {
+                              final String selectedText = editableTextState.textEditingValue.selection.textInside(editableTextState.textEditingValue.text);
+                              _showDefinition(selectedText);
+                              editableTextState.hideToolbar();
+                            },
+                          ),
+                        );
+                        return AdaptiveTextSelectionToolbar.buttonItems(
+                          anchors: editableTextState.contextMenuAnchors,
+                          buttonItems: buttonItems,
+                        );
+                      },
+                    ),
+                  ]),
+                ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.03, end: 0, duration: 500.ms),
+                const SizedBox(height: 16),
+
+                // Kết quả & thu âm
+                _card(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text('Kết quả nhận diện',
+                        style: TextStyle(color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w600)),
+                  ),
+                  const SizedBox(height: 20),
+                  PronunciationRecorderWidget(
+                    targetText: widget.sentence.text,
+                    recordId: 'practice_${widget.sentence.id}',
+                    showListenSample: true,
+                    onResult: (result) => _saveProgress(result, widget.sentence),
+                  ),
+                ])).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.03, end: 0, duration: 500.ms, delay: 200.ms),
+              ]),
             ),
-          ])),
-        ]),
+          ),
+        ],
       ),
     );
   }
@@ -209,8 +263,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5))],
+      borderRadius: BorderRadius.circular(22),
+      boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.06), blurRadius: 16, offset: const Offset(0, 6))],
     ),
     child: child,
   );

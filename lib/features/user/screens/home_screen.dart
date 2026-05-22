@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/topic.dart';
 import '../../../data/models/exam_paper.dart';
@@ -40,7 +41,15 @@ class TopicProgressWidget extends StatelessWidget {
             }
             return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const SizedBox(height: 8),
-              ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: avg / 100, backgroundColor: Colors.grey[200], color: AppColors.accent, minHeight: 6)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: avg / 100,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+                  color: AppColors.accent,
+                  minHeight: 6,
+                ),
+              ),
               const SizedBox(height: 6),
               Text('${avg.toStringAsFixed(0)}% hoàn thành', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
             ]);
@@ -68,7 +77,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    // ★ Mặc định vào tab "Khám phá" (index 1) thay vì "Cá nhân" (index 0)
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
       setState(() {}); // Rebuild to update FAB visibility
@@ -101,10 +111,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Row(children: [Icon(isPublic ? Icons.public : Icons.lock_outline, color: isPublic ? Colors.green : Colors.grey), const SizedBox(width: 8), Text(isPublic ? 'Công khai' : 'Cá nhân', style: const TextStyle(fontWeight: FontWeight.bold))]),
-              Switch(value: isPublic, activeColor: Colors.green, onChanged: (v) => setD(() => isPublic = v)),
+              Row(children: [Icon(isPublic ? Icons.public : Icons.lock_outline, color: isPublic ? AppColors.success : Colors.grey), const SizedBox(width: 8), Text(isPublic ? 'Công khai' : 'Cá nhân', style: const TextStyle(fontWeight: FontWeight.bold))]),
+              Switch(value: isPublic, activeColor: AppColors.success, onChanged: (v) => setD(() => isPublic = v)),
             ]),
           ),
         ]),
@@ -156,8 +166,35 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
       builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-        if (!snap.hasData || snap.data!.docs.isEmpty) return Center(child: Text(isExplore ? 'Chưa có chủ đề cộng đồng nào.' : 'Bạn chưa tạo chủ đề nào.', style: const TextStyle(color: Colors.grey, fontSize: 15)));
+        if (snap.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator(color: AppColors.primary.withValues(alpha: 0.6)));
+        }
+        if (!snap.hasData || snap.data!.docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isExplore ? Icons.explore_outlined : Icons.folder_outlined,
+                  size: 64,
+                  color: AppColors.textLight,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isExplore ? 'Chưa có chủ đề cộng đồng nào.' : 'Bạn chưa tạo chủ đề nào.',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 15),
+                ),
+                if (!isExplore) ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Bấm nút + để tạo chủ đề mới',
+                    style: TextStyle(color: AppColors.textLight, fontSize: 13),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }
         var topics = FirestoreService.parseTopics(snap.data!);
         if (_searchQuery.isNotEmpty) {
           final q = _searchQuery.toLowerCase();
@@ -172,19 +209,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             final t = topics[i];
             final isOwner = t.uid == uid;
             return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4)),
+                ],
+              ),
               child: Material(color: Colors.transparent, child: InkWell(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TopicDetailScreen(topic: t))),
                 child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-                  Container(height: 64, width: 64, decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle), child: const Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 30)),
-                  const SizedBox(width: 16),
+                  // Topic icon with gradient
+                  Container(
+                    height: 56, width: 56,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.primary.withValues(alpha: 0.12), AppColors.primaryLight.withValues(alpha: 0.08)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 28),
+                  ),
+                  const SizedBox(width: 14),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(t.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                    const SizedBox(height: 4),
-                    Text(t.description, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    if (isExplore) Padding(padding: const EdgeInsets.only(top: 6), child: Row(children: [const Icon(Icons.person_outline, size: 14, color: Colors.blueGrey), const SizedBox(width: 4), Text(t.authorName, style: const TextStyle(fontSize: 12, color: Colors.blueGrey, fontStyle: FontStyle.italic))])),
+                    Text(t.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    const SizedBox(height: 3),
+                    Text(t.description, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    if (isExplore) Padding(padding: const EdgeInsets.only(top: 5), child: Row(children: [const Icon(Icons.person_outline, size: 14, color: AppColors.textSecondary), const SizedBox(width: 4), Text(t.authorName, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic))])),
                     TopicProgressWidget(topicId: t.id),
                   ])),
                   if (isOwner) PopupMenuButton<String>(
@@ -196,11 +251,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 20, color: Colors.blue), SizedBox(width: 8), Text('Sửa')])),
                       PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 20, color: Colors.red), SizedBox(width: 8), Text('Xóa', style: TextStyle(color: Colors.red))])),
                     ],
-                    icon: const Icon(Icons.more_vert, color: Colors.grey),
+                    icon: const Icon(Icons.more_vert, color: AppColors.textLight),
                   ) else const Icon(Icons.chevron_right_rounded, color: AppColors.textLight, size: 28),
                 ])),
               )),
-            );
+            ).animate().fadeIn(duration: 400.ms, delay: (50 * i).ms).slideX(begin: 0.03, end: 0, duration: 350.ms, delay: (50 * i).ms);
           },
         );
       },
@@ -222,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 100),
           children: [
-            // Section 1: Header - Bảng xếp hạng & Bài thi của tôi (hoặc chia thành card riêng)
+            // Section 1: Header - Bảng xếp hạng & Bài thi của tôi
             Row(
               children: [
                 Expanded(
@@ -232,21 +287,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.amber.shade100,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.amber, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(color: Colors.orange.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 3)),
+                        ],
                       ),
                       child: const Column(
                         children: [
-                          Icon(Icons.leaderboard_rounded, size: 36, color: Colors.amber),
+                          Icon(Icons.leaderboard_rounded, size: 36, color: Color(0xFFF57C00)),
                           SizedBox(height: 8),
-                          Text('Bảng xếp hạng', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 15)),
+                          Text('Bảng xếp hạng', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFF57C00), fontSize: 14)),
                         ],
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
+                ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.05, end: 0, duration: 400.ms),
+                const SizedBox(width: 14),
                 Expanded(
                   child: InkWell(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserExamManagement())),
@@ -254,20 +315,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        gradient: LinearGradient(
+                          colors: [AppColors.primary.withValues(alpha: 0.08), AppColors.primaryLight.withValues(alpha: 0.1)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primary, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(color: AppColors.primary.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 3)),
+                        ],
                       ),
                       child: const Column(
                         children: [
                           Icon(Icons.edit_note_rounded, size: 36, color: AppColors.primary),
                           SizedBox(height: 8),
-                          Text('Bài thi của tôi', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 15)),
+                          Text('Bài thi của tôi', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 14)),
                         ],
                       ),
                     ),
                   ),
-                ),
+                ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: 0.05, end: 0, duration: 400.ms, delay: 100.ms),
               ],
             ),
             const SizedBox(height: 24),
@@ -278,17 +345,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               decoration: BoxDecoration(
                 gradient: const LinearGradient(colors: AppColors.primaryGradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6))],
               ),
               child: Row(children: [
-                const Icon(Icons.assignment_rounded, color: Colors.white70, size: 32),
-                const SizedBox(width: 12),
+                Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.assignment_rounded, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 14),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   const Text('Hệ thống Đề Thi', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text(isLoading ? 'Đang tải...' : '${papers.length} đề thi đang mở', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  const SizedBox(height: 2),
+                  Text(isLoading ? 'Đang tải...' : '${papers.length} đề thi đang mở', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
                 ])),
               ]),
-            ),
+            ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.03, end: 0, duration: 400.ms, delay: 200.ms),
             const SizedBox(height: 20),
 
             if (isLoading)
@@ -298,18 +373,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 32),
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Icon(Icons.assignment_outlined, size: 64, color: Colors.grey),
+                    Icon(Icons.assignment_outlined, size: 64, color: AppColors.textLight),
                     const SizedBox(height: 16),
-                    const Text('Chưa có đề thi nào.', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                    const Text('Chưa có đề thi nào.', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
                     const SizedBox(height: 8),
-                    const Text('Admin chưa tạo đề thi nào hoặc chưa xuất bản.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    const Text('Admin chưa tạo đề thi nào hoặc chưa xuất bản.', style: TextStyle(color: AppColors.textLight, fontSize: 13)),
                   ]),
                 ),
               )
             else ...[
               const Text('Chọn đề thi', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.primary)),
               const SizedBox(height: 12),
-              ...papers.map((paper) => _buildPaperCard(context, paper)),
+              ...papers.asMap().entries.map((e) => _buildPaperCard(context, e.value, e.key)),
             ]
           ],
         );
@@ -318,36 +393,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _sharePaper(BuildContext context, ExamPaper paper) {
-    // Deep link format: vkulearning://exam?id=<examId>
-    // Hoặc web URL: https://vku-vietnamese-learning.web.app/?examId=<examId>
     final link = 'https://vku-vietnamese-learning.web.app/?examId=${paper.id}';
     Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('🔗 Đã sao chép link: ${paper.title}'),
-      backgroundColor: Colors.green,
+      backgroundColor: AppColors.success,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       action: SnackBarAction(label: 'OK', textColor: Colors.white, onPressed: () {}),
     ));
   }
 
-  Widget _buildPaperCard(BuildContext context, ExamPaper paper) {
+  Widget _buildPaperCard(BuildContext context, ExamPaper paper, int index) {
     bool _loading = false;
     return StatefulBuilder(
       builder: (context, setS) => Container(
         margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4))]),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Container(width: 48, height: 48,
-                  decoration: BoxDecoration(gradient: const LinearGradient(colors: AppColors.primaryGradient), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(gradient: const LinearGradient(colors: AppColors.primaryGradient), borderRadius: BorderRadius.circular(14)),
                   child: const Icon(Icons.assignment_rounded, color: Colors.white, size: 26)),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(paper.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                Text(paper.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                 Row(children: [
                   const Icon(Icons.timer_outlined, size: 14, color: AppColors.textSecondary),
                   const SizedBox(width: 4),
@@ -368,41 +444,51 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ]),
             const SizedBox(height: 14),
             SizedBox(width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12)),
-                onPressed: _loading ? null : () async {
-                  setS(() => _loading = true);
-                  try {
-                    final snap = await FirestoreService.examQuestionsStream(paper.id).first;
-                    final questions = FirestoreService.parseExamQuestions(snap);
-                    if (!context.mounted) return;
-                    if (questions.isEmpty) {
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 3))],
+                ),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: _loading ? null : () async {
+                    setS(() => _loading = true);
+                    try {
+                      final snap = await FirestoreService.examQuestionsStream(paper.id).first;
+                      final questions = FirestoreService.parseExamQuestions(snap);
+                      if (!context.mounted) return;
+                      if (questions.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('⚠️ Đề thi chưa có câu hỏi!'), backgroundColor: Colors.orange));
+                        return;
+                      }
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => NewExamScreen(paper: paper, questions: questions)));
+                    } catch (e) {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('⚠️ Đề thi chưa có câu hỏi!'), backgroundColor: Colors.orange));
-                      return;
+                        SnackBar(content: Text('❌ Lỗi tải đề: $e'), backgroundColor: Colors.red));
+                    } finally {
+                      if (context.mounted) setS(() => _loading = false);
                     }
-                    Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => NewExamScreen(paper: paper, questions: questions)));
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('❌ Lỗi tải đề: $e'), backgroundColor: Colors.red));
-                  } finally {
-                    if (context.mounted) setS(() => _loading = false);
-                  }
-                },
-                icon: _loading
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                label: Text(_loading ? 'Đang tải...' : 'Bắt đầu thi',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  },
+                  icon: _loading
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                  label: Text(_loading ? 'Đang tải...' : 'Bắt đầu thi',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
               ),
             ),
           ]),
         ),
-      ),
+      ).animate().fadeIn(duration: 400.ms, delay: (300 + 80 * index).ms).slideY(begin: 0.03, end: 0, duration: 400.ms, delay: (300 + 80 * index).ms),
     );
   }
 
@@ -411,38 +497,118 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final uid = FirebaseAuth.instance.currentUser?.uid;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.primary,
-        elevation: 0,
-        leading: _isSearching
-            ? IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => setState(() { _isSearching = false; _searchCtrl.clear(); _searchQuery = ''; }))
-            : IconButton(icon: const Icon(Icons.account_circle_outlined, size: 28), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())), tooltip: 'Hồ sơ'),
-        title: _isSearching
-            ? TextField(controller: _searchCtrl, autofocus: true, decoration: const InputDecoration(hintText: 'Nhập tên chủ đề, tác giả...', border: InputBorder.none, hintStyle: TextStyle(color: Colors.grey)), style: const TextStyle(color: AppColors.primary, fontSize: 18), cursorColor: AppColors.primary, onChanged: (v) => setState(() => _searchQuery = v))
-            : const Text('Học Tiếng Việt AI'),
-        actions: [
-          _isSearching
-              ? IconButton(icon: const Icon(Icons.close_rounded, color: Colors.grey), onPressed: () => setState(() { _searchCtrl.clear(); _searchQuery = ''; }))
-              : IconButton(icon: const Icon(Icons.search_rounded), onPressed: () => setState(() => _isSearching = true)),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppColors.accent,
-          indicatorWeight: 3,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.grey,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          tabs: const [Tab(text: 'Cá nhân'), Tab(text: 'Khám phá'), Tab(icon: Icon(Icons.assignment_rounded, size: 18), text: 'Đề Thi')],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(140),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // ── Top bar ──
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      _isSearching
+                          ? IconButton(
+                              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primary),
+                              onPressed: () => setState(() { _isSearching = false; _searchCtrl.clear(); _searchQuery = ''; }),
+                            )
+                          : IconButton(
+                              icon: Container(
+                                width: 36, height: 36,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.person_outlined, color: Colors.white, size: 20),
+                              ),
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+                              tooltip: 'Hồ sơ',
+                            ),
+                      Expanded(
+                        child: _isSearching
+                            ? TextField(
+                                controller: _searchCtrl,
+                                autofocus: true,
+                                decoration: InputDecoration(
+                                  hintText: 'Tìm chủ đề, tác giả...',
+                                  border: InputBorder.none,
+                                  hintStyle: TextStyle(color: AppColors.textLight),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                                cursorColor: AppColors.primary,
+                                onChanged: (v) => setState(() => _searchQuery = v),
+                              )
+                            : const Text(
+                                'Học Tiếng Việt AI',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                      ),
+                      _isSearching
+                          ? IconButton(icon: const Icon(Icons.close_rounded, color: AppColors.textLight), onPressed: () => setState(() { _searchCtrl.clear(); _searchQuery = ''; }))
+                          : IconButton(icon: const Icon(Icons.search_rounded, color: AppColors.primary), onPressed: () => setState(() => _isSearching = true)),
+                    ],
+                  ),
+                ),
+                // ── Tab bar ──
+                TabBar(
+                  controller: _tabController,
+                  indicatorColor: AppColors.primary,
+                  indicatorWeight: 3,
+                  indicatorSize: TabBarIndicatorSize.label,
+                  labelColor: AppColors.primary,
+                  unselectedLabelColor: AppColors.textLight,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                  tabs: const [
+                    Tab(text: 'Cá nhân'),
+                    Tab(text: 'Khám phá'),
+                    Tab(icon: Icon(Icons.assignment_rounded, size: 18), text: 'Đề Thi'),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       floatingActionButton: _tabController.index == 2
           ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _showTopicDialog(context),
-              backgroundColor: AppColors.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('Chủ đề', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          : Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: AppColors.primaryGradient),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: FloatingActionButton.extended(
+                onPressed: () => _showTopicDialog(context),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text('Chủ đề', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
             ),
       body: TabBarView(
         controller: _tabController,

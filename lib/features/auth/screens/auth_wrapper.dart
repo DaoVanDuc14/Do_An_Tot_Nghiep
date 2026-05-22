@@ -70,7 +70,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const _SplashScreen();
+    // Loading state: hiển thị indicator nhẹ (splash đã hiển thị trước đó rồi)
+    if (_loading) return _buildLoadingScreen();
     if (_user == null) return const AuthScreen();
 
     // Bắt buộc xác minh email (trừ admin)
@@ -82,24 +83,46 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (_role == 'admin') return const AdminDashboard();
     return const HomeScreen();
   }
-}
 
-class _SplashScreen extends StatelessWidget {
-  const _SplashScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.primary,
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      backgroundColor: AppColors.primaryDark,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.school_rounded, color: Colors.white, size: 64),
-            SizedBox(height: 24),
-            CircularProgressIndicator(color: AppColors.accent),
-            SizedBox(height: 16),
-            Text('Đang tải...', style: TextStyle(color: Colors.white70, fontSize: 16)),
+            // Logo nhỏ
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryLight.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  'lib/data/images/Logo.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: Colors.white.withValues(alpha: 0.7),
+                strokeWidth: 2.5,
+              ),
+            ),
           ],
         ),
       ),
