@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/topic.dart';
@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Row(children: [Icon(isPublic ? Icons.public : Icons.lock_outline, color: isPublic ? AppColors.success : Colors.grey), const SizedBox(width: 8), Text(isPublic ? 'Công khai' : 'Cá nhân', style: const TextStyle(fontWeight: FontWeight.bold))]),
-              Switch(value: isPublic, activeColor: AppColors.success, onChanged: (v) => setD(() => isPublic = v)),
+              Switch(value: isPublic, activeThumbColor: AppColors.success, onChanged: (v) => setD(() => isPublic = v)),
             ]),
           ),
         ]),
@@ -161,6 +161,92 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  // ─── Topic Card mới theo thiết kế tham chiếu ───────────────
+  Widget _buildTopicCard(Topic t, int index, {required bool isExplore, required bool isOwner}) {
+    // Chọn icon và gradient theo index để tạo sự phong phú
+    final iconList = [
+      Icons.menu_book_rounded,
+      Icons.school_rounded,
+      Icons.auto_stories_rounded,
+      Icons.bookmark_rounded,
+      Icons.lightbulb_rounded,
+    ];
+    final gradientList = [
+      [AppColors.primary.withValues(alpha: 0.12), AppColors.primaryLight.withValues(alpha: 0.08)],
+      [AppColors.accent.withValues(alpha: 0.12), const Color(0xFF0077B6).withValues(alpha: 0.08)],
+      [const Color(0xFF8E54E9).withValues(alpha: 0.12), const Color(0xFF4776E6).withValues(alpha: 0.08)],
+      [AppColors.warning.withValues(alpha: 0.12), const Color(0xFFFFB74D).withValues(alpha: 0.08)],
+      [AppColors.success.withValues(alpha: 0.12), const Color(0xFF4CAF50).withValues(alpha: 0.08)],
+    ];
+    final iconColorList = [
+      AppColors.primary,
+      AppColors.accent,
+      const Color(0xFF8E54E9),
+      AppColors.warning,
+      AppColors.success,
+    ];
+
+    final colorIndex = index % iconList.length;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Material(color: Colors.transparent, child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TopicDetailScreen(topic: t))),
+        child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
+          // Topic icon with gradient
+          Container(
+            height: 56, width: 56,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradientList[colorIndex],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(iconList[colorIndex], color: iconColorList[colorIndex], size: 28),
+          ),
+          const SizedBox(width: 14),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(t.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            if (t.description.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Text(t.description, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+            ],
+            if (isExplore) Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Row(children: [
+                const Icon(Icons.person_outline, size: 14, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Text(t.authorName, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic)),
+              ]),
+            ),
+            TopicProgressWidget(topicId: t.id),
+          ])),
+          if (isOwner) PopupMenuButton<String>(
+            onSelected: (v) {
+              if (v == 'edit') { _showTopicDialog(context, topic: t); }
+              else if (v == 'delete') { _confirmDeleteTopic(context, t); }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 20, color: Colors.blue), SizedBox(width: 8), Text('Sửa')])),
+              PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 20, color: Colors.red), SizedBox(width: 8), Text('Xóa', style: TextStyle(color: Colors.red))])),
+            ],
+            icon: const Icon(Icons.more_vert, color: AppColors.textLight),
+          ) else const Icon(Icons.chevron_right_rounded, color: AppColors.textLight, size: 28),
+        ])),
+      )),
+    ).animate().fadeIn(duration: 400.ms, delay: (50 * index).ms).slideX(begin: 0.03, end: 0, duration: 350.ms, delay: (50 * index).ms);
+  }
+
   Widget _buildTopicList(Stream<QuerySnapshot> stream, {required bool isExplore}) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     return StreamBuilder<QuerySnapshot>(
@@ -174,10 +260,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  isExplore ? Icons.explore_outlined : Icons.folder_outlined,
-                  size: 64,
-                  color: AppColors.textLight,
+                Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.06),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isExplore ? Icons.explore_outlined : Icons.folder_outlined,
+                    size: 40,
+                    color: AppColors.textLight,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -208,54 +301,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           itemBuilder: (context, i) {
             final t = topics[i];
             final isOwner = t.uid == uid;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Material(color: Colors.transparent, child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => TopicDetailScreen(topic: t))),
-                child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-                  // Topic icon with gradient
-                  Container(
-                    height: 56, width: 56,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.primary.withValues(alpha: 0.12), AppColors.primaryLight.withValues(alpha: 0.08)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 28),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(t.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                    const SizedBox(height: 3),
-                    Text(t.description, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    if (isExplore) Padding(padding: const EdgeInsets.only(top: 5), child: Row(children: [const Icon(Icons.person_outline, size: 14, color: AppColors.textSecondary), const SizedBox(width: 4), Text(t.authorName, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic))])),
-                    TopicProgressWidget(topicId: t.id),
-                  ])),
-                  if (isOwner) PopupMenuButton<String>(
-                    onSelected: (v) {
-                      if (v == 'edit') { _showTopicDialog(context, topic: t); }
-                      else if (v == 'delete') { _confirmDeleteTopic(context, t); }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 20, color: Colors.blue), SizedBox(width: 8), Text('Sửa')])),
-                      PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 20, color: Colors.red), SizedBox(width: 8), Text('Xóa', style: TextStyle(color: Colors.red))])),
-                    ],
-                    icon: const Icon(Icons.more_vert, color: AppColors.textLight),
-                  ) else const Icon(Icons.chevron_right_rounded, color: AppColors.textLight, size: 28),
-                ])),
-              )),
-            ).animate().fadeIn(duration: 400.ms, delay: (50 * i).ms).slideX(begin: 0.03, end: 0, duration: 350.ms, delay: (50 * i).ms);
+            return _buildTopicCard(t, i, isExplore: isExplore, isOwner: isOwner);
           },
         );
       },
@@ -405,7 +451,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildPaperCard(BuildContext context, ExamPaper paper, int index) {
-    bool _loading = false;
+    bool loading = false;
     return StatefulBuilder(
       builder: (context, setS) => Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -457,8 +503,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  onPressed: _loading ? null : () async {
-                    setS(() => _loading = true);
+                  onPressed: loading ? null : () async {
+                    setS(() => loading = true);
                     try {
                       final snap = await FirestoreService.examQuestionsStream(paper.id).first;
                       final questions = FirestoreService.parseExamQuestions(snap);
@@ -475,13 +521,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('❌ Lỗi tải đề: $e'), backgroundColor: Colors.red));
                     } finally {
-                      if (context.mounted) setS(() => _loading = false);
+                      if (context.mounted) setS(() => loading = false);
                     }
                   },
-                  icon: _loading
+                  icon: loading
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                  label: Text(_loading ? 'Đang tải...' : 'Bắt đầu thi',
+                  label: Text(loading ? 'Đang tải...' : 'Bắt đầu thi',
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -492,13 +538,39 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  // ─── Build Avatar Widget ────────────────────────────────────
+  Widget _buildAvatar() {
+    final user = FirebaseAuth.instance.currentUser;
+    final photoUrl = user?.photoURL;
+    final initial = (user?.displayName?.isNotEmpty == true
+        ? user!.displayName![0]
+        : user?.email?[0] ?? 'V').toUpperCase();
+
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+      child: Container(
+        width: 38, height: 38,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: AppColors.primaryGradient),
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.3), width: 2),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: photoUrl != null && photoUrl.isNotEmpty
+            ? Image.network(photoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) =>
+                Center(child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))))
+            : Center(child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(140),
+        preferredSize: const Size.fromHeight(130),
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
@@ -515,49 +587,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               children: [
                 // ── Top bar ──
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   child: Row(
                     children: [
-                      _isSearching
-                          ? IconButton(
-                              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primary),
-                              onPressed: () => setState(() { _isSearching = false; _searchCtrl.clear(); _searchQuery = ''; }),
-                            )
-                          : IconButton(
-                              icon: Container(
-                                width: 36, height: 36,
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(colors: AppColors.primaryGradient),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    (FirebaseAuth.instance.currentUser?.displayName?.isNotEmpty == true
-                                        ? FirebaseAuth.instance.currentUser!.displayName![0]
-                                        : FirebaseAuth.instance.currentUser?.email?[0] ?? 'V').toUpperCase(),
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                                  ),
-                                ),
-                              ),
-                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
-                              tooltip: 'Hồ sơ',
-                            ),
-                      Expanded(
-                        child: _isSearching
-                            ? TextField(
-                                controller: _searchCtrl,
-                                autofocus: true,
-                                decoration: InputDecoration(
-                                  hintText: 'Tìm chủ đề, tác giả...',
-                                  border: InputBorder.none,
-                                  hintStyle: TextStyle(color: AppColors.textLight),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                                ),
-                                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
-                                cursorColor: AppColors.primary,
-                                onChanged: (v) => setState(() => _searchQuery = v),
-                              )
-                            : ShaderMask(
+                      // Logo
+                      if (!_isSearching) ...[
+                        Image.asset(
+                          'lib/data/images/logo_khong_nen.png',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(width: 10),
+                        // App name + subtitle
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ShaderMask(
                                 shaderCallback: (bounds) => const LinearGradient(
                                   colors: AppColors.primaryGradient,
                                   begin: Alignment.topLeft,
@@ -565,19 +613,68 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 ).createShader(bounds),
                                 child: const Text(
                                   'VGo',
-                                  textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontSize: 28,
+                                    fontSize: 24,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
-                                    letterSpacing: 1.2,
+                                    letterSpacing: 1.0,
                                   ),
                                 ),
                               ),
-                      ),
-                      _isSearching
-                          ? IconButton(icon: const Icon(Icons.close_rounded, color: AppColors.textLight), onPressed: () => setState(() { _searchCtrl.clear(); _searchQuery = ''; }))
-                          : IconButton(icon: const Icon(Icons.search_rounded, color: AppColors.primary), onPressed: () => setState(() => _isSearching = true)),
+                              Text(
+                                'Học mọi lúc, vui mọi nơi',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      // Search bar (expanded when searching)
+                      if (_isSearching) ...[
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primary),
+                          onPressed: () => setState(() { _isSearching = false; _searchCtrl.clear(); _searchQuery = ''; }),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchCtrl,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              hintText: 'Tìm chủ đề, tác giả...',
+                              border: InputBorder.none,
+                              hintStyle: TextStyle(color: AppColors.textLight),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                            cursorColor: AppColors.primary,
+                            onChanged: (v) => setState(() => _searchQuery = v),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: AppColors.textLight),
+                          onPressed: () => setState(() { _searchCtrl.clear(); _searchQuery = ''; }),
+                        ),
+                      ],
+                      // Action buttons (visible when not searching)
+                      if (!_isSearching) ...[
+                        IconButton(
+                          icon: Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
+                          ),
+                          onPressed: () => setState(() => _isSearching = true),
+                        ),
+                        const SizedBox(width: 4),
+                        _buildAvatar(),
+                      ],
                     ],
                   ),
                 ),
@@ -594,7 +691,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   tabs: const [
                     Tab(text: 'Cá nhân'),
                     Tab(text: 'Khám phá'),
-                    Tab(text: 'Đề thi'),
+                    Tab(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.assignment_outlined, size: 18),
+                          SizedBox(width: 6),
+                          Text('Đề Thi'),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ],

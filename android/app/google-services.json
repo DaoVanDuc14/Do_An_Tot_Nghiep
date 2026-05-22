@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "291922863219-2srvu2t414hjpbeffh9bj8u6c302t3tp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vku.duclab.vku_learning_app",
+            "certificate_hash": "e9ca982ad331a46f389ec7f193f43d6ea32d17d4"
+          }
+        },
+        {
+          "client_id": "291922863219-dsranujsvcushp724nnridulohc3b2ig.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vku.duclab.vku_learning_app",
+            "certificate_hash": "6d4b4b13331b31e5f22080177035f21b489ba25a"
+          }
+        },
+        {
           "client_id": "291922863219-9k9rulfaildrk17fkfr26ii9p5rhd87h.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +45,13 @@
             {
               "client_id": "291922863219-9k9rulfaildrk17fkfr26ii9p5rhd87h.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "291922863219-3rsk08eaohfgq1ibqfhnps16m07hqqru.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vku.duclab.vkuLearningApp"
+              }
             }
           ]
         }

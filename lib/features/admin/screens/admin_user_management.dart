@@ -15,9 +15,20 @@ class AdminUserManagement extends StatefulWidget {
 class _AdminUserManagementState extends State<AdminUserManagement> {
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
+  bool _isSearching = false;
 
   @override
   void dispose() { _searchCtrl.dispose(); super.dispose(); }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchCtrl.clear();
+        _searchQuery = '';
+      }
+    });
+  }
 
   void _confirmDelete(BuildContext context, String uid, String name) {
     showDialog(
@@ -177,33 +188,59 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Quản lý Người dùng'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-            child: TextField(
-              controller: _searchCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Tìm tên, email...',
-                hintStyle: const TextStyle(color: Colors.white54),
-                prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white54),
-                        onPressed: () => setState(() { _searchCtrl.clear(); _searchQuery = ''; }))
-                    : null,
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.15),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              ),
-              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+        centerTitle: true,
+        title: const Text('Quản lý Người dùng', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: AppColors.primaryGradient,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
         ),
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            tooltip: _isSearching ? 'Đóng tìm kiếm' : 'Tìm kiếm',
+            onPressed: _toggleSearch,
+          ),
+        ],
+        bottom: _isSearching
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(70),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Tìm tên, email...',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.white54),
+                              onPressed: () => setState(() {
+                                _searchCtrl.clear();
+                                _searchQuery = '';
+                              }))
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.15),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                  ),
+                ),
+              )
+            : null,
       ),
       body: StreamBuilder(
         stream: FirestoreService.allUsersStream(),
@@ -239,47 +276,142 @@ class _AdminUserManagementState extends State<AdminUserManagement> {
               final avatarUrl = data['avatarUrl'] ?? data['photoUrl'] ?? '';
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))]),
-                child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                    backgroundColor: isAdmin ? const Color(0xFFf7971e).withValues(alpha: 0.2) : AppColors.primary.withValues(alpha: 0.12),
-                    child: avatarUrl.isEmpty
-                        ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: TextStyle(color: isAdmin ? const Color(0xFFf7971e) : AppColors.primary,
-                                fontWeight: FontWeight.bold, fontSize: 18))
-                        : null,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Avatar
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                        backgroundColor: isAdmin ? const Color(0xFFf7971e).withValues(alpha: 0.2) : AppColors.primary.withValues(alpha: 0.12),
+                        child: avatarUrl.isEmpty
+                            ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                style: TextStyle(color: isAdmin ? const Color(0xFFf7971e) : AppColors.primary,
+                                    fontWeight: FontWeight.bold, fontSize: 16))
+                            : null,
+                      ),
+                      const SizedBox(width: 14),
+                      // Content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Row 1: Tên + điểm tích lũy
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primary),
+                                        ),
+                                      ),
+                                      if (isAdmin) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFf7971e).withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text('ADMIN', style: TextStyle(fontSize: 10, color: Color(0xFFf7971e), fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // Điểm tích lũy
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.star_rounded, size: 14, color: AppColors.accent),
+                                      const SizedBox(width: 3),
+                                      Text('$score', style: const TextStyle(fontSize: 13, color: AppColors.accent, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            // Row 2: Email
+                            Row(
+                              children: [
+                                const Icon(Icons.email_outlined, size: 14, color: AppColors.textSecondary),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(email.isNotEmpty ? email : 'Không có email',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            // Row 3: Nút Sửa + Xóa
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 36,
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(color: AppColors.accent, width: 1),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        foregroundColor: AppColors.accent,
+                                      ),
+                                      icon: const Icon(Icons.edit_outlined, size: 16),
+                                      label: const Text('Sửa', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                      onPressed: () => _showEditDialog(context, uid, data),
+                                    ),
+                                  ),
+                                ),
+                                if (!isAdmin) ...[
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 36,
+                                      child: OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(color: Colors.redAccent, width: 1),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          foregroundColor: Colors.redAccent,
+                                        ),
+                                        icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                                        label: const Text('Xóa', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                        onPressed: () => _confirmDelete(context, uid, name),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Row(children: [
-                      Flexible(child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primary))),
-                      if (isAdmin) ...[const SizedBox(width: 8),
-                        Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(color: const Color(0xFFf7971e).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-                            child: const Text('ADMIN', style: TextStyle(fontSize: 10, color: Color(0xFFf7971e), fontWeight: FontWeight.bold)))],
-                    ]),
-                    const SizedBox(height: 3),
-                    Text(email, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                    const SizedBox(height: 4),
-                    Row(children: [const Icon(Icons.star_rounded, size: 14, color: AppColors.accent), const SizedBox(width: 3),
-                      Text('$score điểm', style: const TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600))]),
-                  ])),
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: AppColors.accent),
-                      tooltip: 'Sửa thông tin',
-                      onPressed: () => _showEditDialog(context, uid, data),
-                    ),
-                    if (!isAdmin) IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                      tooltip: 'Xóa user',
-                      onPressed: () => _confirmDelete(context, uid, name),
-                    ),
-                  ]),
-                ])),
+                ),
               );
             },
           );

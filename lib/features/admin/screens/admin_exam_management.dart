@@ -18,9 +18,20 @@ class AdminExamManagement extends StatefulWidget {
 class _AdminExamManagementState extends State<AdminExamManagement> {
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
+  bool _isSearching = false;
 
   @override
   void dispose() { _searchCtrl.dispose(); super.dispose(); }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchCtrl.clear();
+        _searchQuery = '';
+      }
+    });
+  }
 
   void _confirmDelete(BuildContext context, ExamPaper paper) {
     showDialog(
@@ -72,33 +83,59 @@ class _AdminExamManagementState extends State<AdminExamManagement> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Quản lý Đề Thi (Admin)'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-            child: TextField(
-              controller: _searchCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Tìm tiêu đề, tác giả...',
-                hintStyle: const TextStyle(color: Colors.white54),
-                prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white54),
-                        onPressed: () => setState(() { _searchCtrl.clear(); _searchQuery = ''; }))
-                    : null,
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.15),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              ),
-              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+        centerTitle: true,
+        title: const Text('Kiểm duyệt Đề Thi', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: AppColors.primaryGradient,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
         ),
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            tooltip: _isSearching ? 'Đóng tìm kiếm' : 'Tìm kiếm',
+            onPressed: _toggleSearch,
+          ),
+        ],
+        bottom: _isSearching
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(70),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Tìm tiêu đề, tác giả...',
+                      hintStyle: const TextStyle(color: Colors.white54),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.white54),
+                              onPressed: () => setState(() {
+                                _searchCtrl.clear();
+                                _searchQuery = '';
+                              }))
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.15),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                  ),
+                ),
+              )
+            : null,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirestoreService.allExamPapersStream(),

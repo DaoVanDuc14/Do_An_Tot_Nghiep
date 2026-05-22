@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../user/screens/profile_screen.dart';
 import 'admin_user_management.dart';
 import 'admin_topic_management.dart';
 import 'admin_exam_management.dart';
@@ -14,50 +15,127 @@ class AdminDashboard extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Bảng điều khiển Admin'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        actions: [IconButton(icon: const Icon(Icons.logout_rounded, color: Colors.redAccent), tooltip: 'Đăng xuất', onPressed: () async => await FirebaseAuth.instance.signOut())],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Header banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(gradient: const LinearGradient(colors: AppColors.primaryGradient, begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))]),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Icon(Icons.admin_panel_settings_rounded, color: Colors.white70, size: 40),
-              const SizedBox(height: 12),
-              const Text('Xin chào, Quản trị viên!', style: TextStyle(color: Colors.white70, fontSize: 14)),
-              Text(user?.email ?? 'Admin', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-            ]),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0D47A1),
+              Color(0xFF1565C0),
+              AppColors.background,
+            ],
+            stops: [0.0, 0.15, 0.35],
           ),
-          const SizedBox(height: 24),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // ── Custom AppBar ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Bảng điều khiển Admin',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    // Profile avatar button
+                    _buildAvatar(context, user),
+                  ],
+                ),
+              ),
 
-          // Stats row
-          Row(children: [
-            Expanded(child: _statCard('Chủ đề', Icons.menu_book_rounded, 'topics', AppColors.primary)),
-            const SizedBox(width: 12),
-            Expanded(child: _statCard('Đề Thi', Icons.assignment_rounded, 'exam_papers', AppColors.accent)),
-          ]),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: _statCard('Người dùng', Icons.people_alt_rounded, 'users', const Color(0xFF8E54E9))),
-          ]),
-          const SizedBox(height: 28),
+              // ── Body content ──
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    // Greeting banner
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: AppColors.primaryGradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+                      ),
+                      child: Row(children: [
+                        Container(
+                          width: 56, height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.admin_panel_settings_rounded, color: Colors.white, size: 32),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          const Text('Xin chào, Quản trị viên!', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                          const SizedBox(height: 2),
+                          Text(user?.email ?? 'Admin', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        ])),
+                      ]),
+                    ),
+                    const SizedBox(height: 24),
 
-          const Text('Quản lý hệ thống', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
-          const SizedBox(height: 16),
+                    // Stats row
+                    Row(children: [
+                      Expanded(child: _statCard('Chủ đề', Icons.menu_book_rounded, 'topics', AppColors.primary)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _statCard('Đề Thi', Icons.assignment_rounded, 'exam_papers', AppColors.accent)),
+                    ]),
+                    const SizedBox(height: 12),
+                    Row(children: [
+                      Expanded(child: _statCard('Người dùng', Icons.people_alt_rounded, 'users', const Color(0xFF8E54E9))),
+                    ]),
+                    const SizedBox(height: 28),
 
-          _menuCard(context, icon: Icons.people_alt_rounded, title: 'Quản lý Người dùng', subtitle: 'Xem danh sách, tìm kiếm, sửa role và thông tin', colors: AppColors.purpleGradient, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUserManagement()))),
-          const SizedBox(height: 14),
-          _menuCard(context, icon: Icons.assignment_rounded, title: 'Kiểm duyệt Đề Thi', subtitle: 'Ẩn / xóa đề thi do người dùng tạo', colors: AppColors.successGradient, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminExamManagement()))),
-          const SizedBox(height: 14),
-          _menuCard(context, icon: Icons.menu_book_rounded, title: 'Quản lý Chủ đề bài học', subtitle: 'Tạo, sửa, xóa các chủ đề và từ vựng', colors: AppColors.accentGradient, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminTopicManagement()))),
-        ]),
+                    const Text('Quản lý hệ thống', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    const SizedBox(height: 16),
+
+                    _menuCard(context, icon: Icons.people_alt_rounded, title: 'Quản lý Người dùng', subtitle: 'Xem danh sách, tìm kiếm, sửa role và thông tin', colors: AppColors.purpleGradient, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUserManagement()))),
+                    const SizedBox(height: 14),
+                    _menuCard(context, icon: Icons.assignment_rounded, title: 'Kiểm duyệt Đề Thi', subtitle: 'Ẩn / xóa đề thi do người dùng tạo', colors: AppColors.successGradient, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminExamManagement()))),
+                    const SizedBox(height: 14),
+                    _menuCard(context, icon: Icons.menu_book_rounded, title: 'Quản lý Chủ đề bài học', subtitle: 'Tạo, sửa, xóa các chủ đề và từ vựng', colors: AppColors.accentGradient, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminTopicManagement()))),
+                  ]),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Profile Avatar (matching user side) ──
+  Widget _buildAvatar(BuildContext context, User? user) {
+    final photoUrl = user?.photoURL;
+    final initial = (user?.displayName?.isNotEmpty == true
+        ? user!.displayName![0]
+        : user?.email?[0] ?? 'A').toUpperCase();
+
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+      child: Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: AppColors.primaryGradient),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: photoUrl != null && photoUrl.isNotEmpty
+            ? Image.network(photoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) =>
+                Center(child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))))
+            : Center(child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
       ),
     );
   }
