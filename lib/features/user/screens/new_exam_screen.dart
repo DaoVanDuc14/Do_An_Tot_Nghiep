@@ -6,7 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exam_paper.dart';
 import '../../../data/models/exam_question.dart';
 import '../../../services/pronunciation_service.dart';
-import '../../shared/pronunciation_recorder_widget.dart';
+import '../../shared/widgets/pronunciation_recorder_widget.dart';
 import 'new_exam_result_screen.dart';
 
 /// Màn hình làm bài thi kiểu Azota.

@@ -278,7 +278,7 @@ class _AuthScreenState extends State<AuthScreen> {
       children: [
         // Logo (trong suốt, không viền trắng)
         Image.asset(
-          'lib/data/images/logo_khong_nen.png',
+          'assets/images/logo_khong_nen.png',
           width: 120,
           height: 120,
           fit: BoxFit.contain,

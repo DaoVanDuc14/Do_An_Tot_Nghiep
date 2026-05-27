@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
-import '../../services/pronunciation_service.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
+import '../../../services/pronunciation_service.dart';
 
 /// Widget dùng chung cho thu âm + chấm phát âm.
 /// Dùng trong cả PracticeScreen và ExamTakingScreen.

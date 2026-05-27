@@ -8,7 +8,7 @@ import '../../../data/models/sentence.dart';
 import '../../../data/models/word_definition.dart';
 import '../../../services/firestore_service.dart';
 import '../../../services/dictionary_service.dart';
-import '../../shared/pronunciation_recorder_widget.dart';
+import '../../shared/widgets/pronunciation_recorder_widget.dart';
 import '../../../services/pronunciation_service.dart';
 
 class PracticeScreen extends StatefulWidget {

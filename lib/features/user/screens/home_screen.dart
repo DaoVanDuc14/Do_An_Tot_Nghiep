@@ -593,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       // Logo
                       if (!_isSearching) ...[
                         Image.asset(
-                          'lib/data/images/logo_khong_nen.png',
+                          'assets/images/logo_khong_nen.png',
                           width: 40,
                           height: 40,
                           fit: BoxFit.contain,
