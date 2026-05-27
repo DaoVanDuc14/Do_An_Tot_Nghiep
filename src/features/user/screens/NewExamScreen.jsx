@@ -29,8 +29,9 @@ export default function NewExamScreen() {
     const loadData = async () => {
       const p = await FS.getExamPaperById(paperId);
       if (!p) { navigate('/home'); return; }
+      const duration = p.durationMinutes || p.duration_minutes || 30;
       setPaper(p);
-      setRemaining(p.durationMinutes * 60);
+      setRemaining(duration * 60);
       const qs = await FS.getExamQuestions(paperId);
       setQuestions(qs);
       setLoading(false);
@@ -39,17 +40,41 @@ export default function NewExamScreen() {
     return () => { timerRef.current && clearInterval(timerRef.current); audioRef.current.pause(); };
   }, [paperId, navigate]);
 
+  const submit = useCallback((autoSubmit = false) => {
+    timerRef.current && clearInterval(timerRef.current);
+    let correct = 0;
+    questions.forEach(q => { if (answers[q.id]?.isCorrect) correct++; });
+    const duration = paper?.durationMinutes || paper?.duration_minutes || 30;
+    const spent = duration * 60 - remaining;
+    navigate('/exam-result', {
+      state: { paper, questions, answers, correctCount: correct, timeSpentSeconds: spent, isAutoSubmit: autoSubmit },
+      replace: true,
+    });
+  }, [answers, questions, paper, remaining, navigate]);
+
+  useEffect(() => {
+    if (started && remaining <= 0) {
+      submit(true);
+    }
+  }, [remaining, started, submit]);
+
   const startExam = () => {
     setStarted(true);
     timerRef.current = setInterval(() => {
       setRemaining(prev => {
-        if (prev <= 1) { clearInterval(timerRef.current); submit(true); return 0; }
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
   };
 
-  const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const fmt = (s) => {
+    if (isNaN(s)) return "00:00";
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  };
 
   const selectMcq = (q, option) => {
     if (answers[q.id]) return;
@@ -66,17 +91,6 @@ export default function NewExamScreen() {
     }));
   };
 
-  const submit = useCallback((autoSubmit = false) => {
-    timerRef.current && clearInterval(timerRef.current);
-    let correct = 0;
-    questions.forEach(q => { if (answers[q.id]?.isCorrect) correct++; });
-    const spent = (paper?.durationMinutes || 0) * 60 - remaining;
-    navigate('/exam-result', {
-      state: { paper, questions, answers, correctCount: correct, timeSpentSeconds: spent, isAutoSubmit: autoSubmit },
-      replace: true,
-    });
-  }, [answers, questions, paper, remaining, navigate]);
-
   const playAudio = (text) => {
     if (isAudioPlaying) { audioRef.current.pause(); setIsAudioPlaying(false); return; }
     setIsAudioPlaying(true);
@@ -89,29 +103,32 @@ export default function NewExamScreen() {
   if (loading) return <div className="loading-center" style={{ minHeight: '100vh' }}><div className="spinner" /></div>;
 
   // ── Start Screen ──
-  if (!started) return (
-    <div style={{ minHeight: '100vh', background: AppColors.background, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ textAlign: 'center', maxWidth: 400 }}>
-        <div style={{ width: 100, height: 100, borderRadius: '50%', background: 'linear-gradient(135deg, #0D47A1, #1976D2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-          <MdAssignment size={52} color="white" />
+  if (!started) {
+    const duration = paper?.durationMinutes || paper?.duration_minutes || 30;
+    return (
+      <div style={{ minHeight: '100vh', background: AppColors.background, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ textAlign: 'center', maxWidth: 400 }}>
+          <div style={{ width: 100, height: 100, borderRadius: '50%', background: 'linear-gradient(135deg, #0D47A1, #1976D2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <MdAssignment size={52} color="white" />
+          </div>
+          <h2 style={{ color: AppColors.primary, marginBottom: 24 }}>{paper?.title}</h2>
+          {[
+            ['❓', `${questions.length} câu hỏi`],
+            ['⏱️', `${duration} phút`],
+            ['⭐', '10 điểm / câu đúng'],
+            ['🎙️', 'Phát âm: thu âm & chấm AI (≥80% = đạt)'],
+          ].map(([icon, text], i) => (
+            <p key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: AppColors.textSecondary, fontSize: 15, marginBottom: 10 }}>
+              <span>{icon}</span> {text}
+            </p>
+          ))}
+          <button className="btn btn-primary" style={{ width: '100%', padding: 16, fontSize: 18, marginTop: 30 }} onClick={startExam}>
+            <FiPlay size={24} /> Bắt đầu làm bài
+          </button>
         </div>
-        <h2 style={{ color: AppColors.primary, marginBottom: 24 }}>{paper?.title}</h2>
-        {[
-          ['❓', `${questions.length} câu hỏi`],
-          ['⏱️', `${paper?.durationMinutes} phút`],
-          ['⭐', '10 điểm / câu đúng'],
-          ['🎙️', 'Phát âm: thu âm & chấm AI (≥80% = đạt)'],
-        ].map(([icon, text], i) => (
-          <p key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: AppColors.textSecondary, fontSize: 15, marginBottom: 10 }}>
-            <span>{icon}</span> {text}
-          </p>
-        ))}
-        <button className="btn btn-primary" style={{ width: '100%', padding: 16, fontSize: 18, marginTop: 30 }} onClick={startExam}>
-          <FiPlay size={24} /> Bắt đầu làm bài
-        </button>
       </div>
-    </div>
-  );
+    );
+  }
 
   // ── Exam Screen ──
   const q = questions[idx];
@@ -124,7 +141,7 @@ export default function NewExamScreen() {
     <div style={{ minHeight: '100vh', background: AppColors.background, display: 'flex', flexDirection: 'column' }}>
       {/* Top bar */}
       <div style={{ background: AppColors.primary, color: 'white', padding: '10px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
           <div style={{ padding: '4px 10px', borderRadius: 20, background: remaining < 60 ? 'rgba(244,67,54,0.2)' : 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <FiClock size={16} color={timerColor} />
             <span style={{ color: timerColor, fontWeight: 700 }}>{fmt(remaining)}</span>
@@ -135,32 +152,37 @@ export default function NewExamScreen() {
           </button>
         </div>
         {/* Progress */}
-        <div style={{ height: 6, background: 'rgba(255,255,255,0.24)', borderRadius: 3, marginTop: 8 }}>
-          <div style={{ height: '100%', width: `${(answered / total) * 100}%`, background: AppColors.accent, borderRadius: 3, transition: 'width 0.3s' }} />
+        <div style={{ maxWidth: 800, margin: '8px auto 0' }}>
+          <div style={{ height: 6, background: 'rgba(255,255,255,0.24)', borderRadius: 3 }}>
+            <div style={{ height: '100%', width: `${(answered / total) * 100}%`, background: AppColors.accent, borderRadius: 3, transition: 'width 0.3s' }} />
+          </div>
         </div>
       </div>
 
       {/* Question grid */}
-      <div style={{ padding: '10px 12px', background: AppColors.surface, overflowX: 'auto', display: 'flex', gap: 6 }}>
-        {questions.map((qq, i) => {
-          const isAnswered = !!answers[qq.id];
-          const isCurrent = i === idx;
-          return (
-            <button key={qq.id} onClick={() => setIdx(i)} style={{
-              width: 38, height: 38, borderRadius: 8, border: isCurrent ? `2px solid ${AppColors.primary}` : 'none',
-              background: isCurrent ? AppColors.primary : isAnswered ? AppColors.accent : '#E0E0E0',
-              color: isCurrent || isAnswered ? 'white' : '#757575',
-              fontWeight: 700, fontSize: 14, cursor: 'pointer', flexShrink: 0,
-            }}>
-              {i + 1}
-            </button>
-          );
-        })}
+      <div style={{ background: AppColors.surface, borderBottom: '1px solid #E0E0E0' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '10px 16px', overflowX: 'auto', display: 'flex', gap: 8 }}>
+          {questions.map((qq, i) => {
+            const isAnswered = !!answers[qq.id];
+            const isCurrent = i === idx;
+            return (
+              <button key={qq.id} onClick={() => setIdx(i)} style={{
+                width: 38, height: 38, borderRadius: 8, border: isCurrent ? `2px solid ${AppColors.primary}` : 'none',
+                background: isCurrent ? AppColors.primary : isAnswered ? AppColors.accent : '#E0E0E0',
+                color: isCurrent || isAnswered ? 'white' : '#757575',
+                fontWeight: 700, fontSize: 14, cursor: 'pointer', flexShrink: 0,
+              }}>
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Question content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-        <div className="card" style={{ marginBottom: 16 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 16px' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <div className="card" style={{ marginBottom: 20 }}>
           <div style={{ textAlign: 'center', marginBottom: 14 }}>
             <span className={`badge ${isMcq ? 'badge-accent' : 'badge-primary'}`}>
               {isMcq ? '🎧 Luyện nghe' : '🎙 Phát âm'}
@@ -180,9 +202,14 @@ export default function NewExamScreen() {
                   color: 'white', cursor: 'pointer',
                   boxShadow: `0 6px 16px ${isAudioPlaying ? 'rgba(0,180,216,0.3)' : 'rgba(21,101,192,0.3)'}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto'
                 }}
               >
-                {isAudioPlaying ? <FiHeadphones size={36} /> : <FiPlay size={36} />}
+                {isAudioPlaying ? (
+                  <FiHeadphones size={36} />
+                ) : (
+                  <FiPlay size={36} style={{ marginLeft: 6 }} />
+                )}
               </motion.button>
             </div>
           ) : (
@@ -246,19 +273,22 @@ export default function NewExamScreen() {
             onResult={(result) => onPronResult(q, result)}
           />
         )}
+        </div>
       </div>
 
       {/* Bottom nav */}
-      <div style={{ padding: '10px 16px 20px', background: AppColors.surface, boxShadow: '0 -2px 8px rgba(0,0,0,0.05)', display: 'flex', gap: 12, alignItems: 'center' }}>
-        <button className="btn btn-secondary" style={{ flex: 1, padding: 14 }} disabled={idx === 0} onClick={() => setIdx(idx - 1)}>
-          <FiArrowLeft size={16} /> Trước
-        </button>
-        <button className="btn-icon" style={{ width: 48, height: 48 }} onClick={() => setShowGrid(true)}>
-          <FiGrid size={20} color={AppColors.primary} />
-        </button>
-        <button className="btn btn-primary" style={{ flex: 1, padding: 14 }} onClick={() => idx < total - 1 ? setIdx(idx + 1) : setShowConfirm(true)}>
-          {idx < total - 1 ? <><FiArrowRight size={16} /> Tiếp theo</> : '✓ Nộp bài'}
-        </button>
+      <div style={{ background: AppColors.surface, boxShadow: '0 -2px 8px rgba(0,0,0,0.05)' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '10px 16px 20px', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button className="btn btn-secondary" style={{ flex: 1, padding: 14 }} disabled={idx === 0} onClick={() => setIdx(idx - 1)}>
+            <FiArrowLeft size={16} /> Trước
+          </button>
+          <button className="btn-icon" style={{ width: 48, height: 48 }} onClick={() => setShowGrid(true)}>
+            <FiGrid size={20} color={AppColors.primary} />
+          </button>
+          <button className="btn btn-primary" style={{ flex: 1, padding: 14 }} onClick={() => idx < total - 1 ? setIdx(idx + 1) : setShowConfirm(true)}>
+            {idx < total - 1 ? <><FiArrowRight size={16} /> Tiếp theo</> : '✓ Nộp bài'}
+          </button>
+        </div>
       </div>
 
       {/* Grid Sheet */}
