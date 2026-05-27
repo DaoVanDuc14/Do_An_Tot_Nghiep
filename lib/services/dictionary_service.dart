@@ -27,7 +27,7 @@ class DictionaryService {
     final definition = await _fetchFromLLM(cleanText);
 
     // 3. Chỉ lưu vào Firestore nếu không phải thông báo lỗi
-    final wordDef = WordDefinition(word: cleanText, definition: definition);
+    final wordDef = WordDefinition.fromLLMResponse(cleanText, definition);
     
     final isError = definition.startsWith("Lỗi") || 
                     definition.startsWith("Không thể") || 
@@ -50,8 +50,7 @@ class DictionaryService {
   // HÀM GỌI LLM GEMINI (Sử dụng HTTP v1 Stable để đảm bảo không bị lỗi 404)
   // HÀM GỌI LLM GEMINI (Có cơ chế Retry và Fallback tự động)
   Future<String> _fetchFromLLM(String text) async {
-    const apiKey = "nhap_api_gemini";
-    // AIzaSyCgsaR-AErTu895wLEvY3-EOXgLiZtJKSo
+    const apiKey = "Dien_Vao";
     // Danh sách các model theo thứ tự ưu tiên
     // Nếu bản 2.5 flash bị quá tải (503) và 2.0 bị hết Quota (429)
     // Bản 2.5-flash-lite đã được kiểm tra là hoạt động tốt nhất hiện tại.
@@ -73,7 +72,53 @@ class DictionaryService {
               "contents": [
                 {
                   "parts": [
-                    {"text": "Bạn là một từ điển Việt-Anh học thuật. Hãy định nghĩa từ/cụm từ '$text' bằng tiếng Anh. Yêu cầu: Ngắn gọn dưới 20 từ, đầu tiên nêu rõ từ loại (danh từ, động từ, tính từ), không bao gồm lời dẫn, không lặp lại từ gốc. Kết quả trả về gồm loại từ sau đó là nội dung định nghĩa."}
+                    {"text": """
+                        Bạn là một từ điển AI chuyên hỗ trợ người nước ngoài học tiếng Việt.
+
+                        Nhiệm vụ:
+                        Giải thích từ hoặc cụm từ tiếng Việt: '$text'
+
+                        Yêu cầu:
+                        - Giải thích bằng tiếng Anh đơn giản, dễ hiểu cho người mới học tiếng Việt.
+                        - Nếu là cụm từ hoặc thành ngữ, hãy giải thích theo nghĩa thực tế.
+                        - Không giải thích quá học thuật.
+                        - Không dài dòng.
+                        - Không lặp lại từ gốc trong định nghĩa.
+                        - Ưu tiên cách dùng thực tế trong giao tiếp hằng ngày.
+                        
+
+                        BẮT BUỘC trả về đúng format sau:
+
+                        Loại từ: ...
+                        Nghĩa: ...
+                        Giải thích: ...
+                        Ví dụ: ...
+                        Dịch ví dụ: ...
+                        Từ đồng nghĩa: ...
+
+                        Quy tắc:
+                        - "Loại từ" viết bằng tiếng Anh (noun, verb, adjective, adverb, phrase...)
+                        - "Nghĩa" tối đa 1 dòng ngắn gọn
+                        - "Giải thích" dưới 25 từ
+                        - "Ví dụ" là câu tiếng Việt tự nhiên
+                        - "Dịch ví dụ" là tiếng Anh
+                        - "Từ đồng nghĩa" ghi 1-3 từ đơn giản nếu có
+                        - Nếu không có từ đồng nghĩa thì ghi: None
+                        - Không thêm markdown (bắt buộc)
+                        - Không thêm ký tự đặc biệt (bắt buộc)
+                        - Không thêm lời mở đầu (bắt buộc)
+                        - Trả kết quả dưới dạng JSON hợp lệ. (bắt buộc)
+
+                        Ví dụ kết quả:
+
+                        Loại từ: verb
+                        Nghĩa: to communicate or share information
+                        Giải thích: Exchange ideas, feelings, or information with others.
+                        Ví dụ: Tôi thường giao tiếp với khách hàng bằng tiếng Anh.
+                        Dịch ví dụ: I usually communicate with customers in English.
+                        Từ đồng nghĩa: nói chuyện, liên lạc
+                        """
+                    }
                   ]
                 }
               ]

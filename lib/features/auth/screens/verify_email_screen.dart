@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 
@@ -88,7 +89,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.logout, color: Colors.white70),
-                      onPressed: () => FirebaseAuth.instance.signOut(),
+                      onPressed: () async {
+                        try { await GoogleSignIn().signOut(); } catch (_) {}
+                        await FirebaseAuth.instance.signOut();
+                      },
                       tooltip: 'Đăng xuất',
                     ),
                   ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_animate/flutter_animate.dart';
@@ -98,6 +99,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             onPressed: () async {
               Navigator.pop(ctx);
+              // Xóa phiên Google để lần sau cho chọn tài khoản khác
+              try {
+                await GoogleSignIn().signOut();
+              } catch (_) {}
               await FirebaseAuth.instance.signOut();
               if (!mounted) return;
               Navigator.of(context).popUntil((route) => route.isFirst);
