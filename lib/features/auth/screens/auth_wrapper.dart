@@ -46,12 +46,18 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Future<void> _onAuthChanged(User? user) async {
     if (!mounted) return;
     if (user == null) {
-      setState(() { _user = null; _role = 'user'; _loading = false; });
+      setState(() {
+        _user = null;
+        _role = 'user';
+        _loading = false;
+      });
       return;
     }
     // Tránh fetch role lại nếu user không đổi (ví dụ khi gọi user.reload() làm trigger userChanges)
     if (_user?.uid == user.uid && !_loading) {
-      setState(() { _user = user; });
+      setState(() {
+        _user = user;
+      });
       return;
     }
     // Fetch role từ Firestore (có timeout để tránh treo vô hạn)
@@ -66,12 +72,22 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final role = (data?['role'] as String?) ?? 'user';
       debugPrint('✅ AuthWrapper: uid=${user.uid} role=$role');
       if (mounted) {
-        setState(() { _user = user; _role = role; _loading = false; });
+        setState(() {
+          _user = user;
+          _role = role;
+          _loading = false;
+        });
       }
     } catch (e) {
-      debugPrint('⚠️ AuthWrapper: Lỗi hoặc timeout khi lấy role, mặc định user. Error: $e');
+      debugPrint(
+        '⚠️ AuthWrapper: Lỗi hoặc timeout khi lấy role, mặc định user. Error: $e',
+      );
       if (mounted) {
-        setState(() { _user = user; _role = 'user'; _loading = false; });
+        setState(() {
+          _user = user;
+          _role = 'user';
+          _loading = false;
+        });
       }
     }
   }

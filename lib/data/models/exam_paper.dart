@@ -34,11 +34,11 @@ class ExamPaper {
   }
 
   Map<String, dynamic> toMap() => {
-        'title': title,
-        'duration_minutes': durationMinutes,
-        'createdAt': Timestamp.now(),
-        'creatorId': creatorId,
-        'creatorName': creatorName,
-        'isPublished': isPublished,
-      };
+    'title': title,
+    'duration_minutes': durationMinutes,
+    'createdAt': Timestamp.now(),
+    'creatorId': creatorId,
+    'creatorName': creatorName,
+    'isPublished': isPublished,
+  };
 }

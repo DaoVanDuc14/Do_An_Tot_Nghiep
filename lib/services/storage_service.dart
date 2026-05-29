@@ -73,7 +73,11 @@ class StorageService {
     String folder = 'online_tests',
   }) async {
     if (kIsWeb && bytes != null) {
-      return uploadAudioFromBytes(bytes, fileName ?? 'audio.wav', folder: folder);
+      return uploadAudioFromBytes(
+        bytes,
+        fileName ?? 'audio.wav',
+        folder: folder,
+      );
     } else if (!kIsWeb && filePath != null) {
       return uploadAudioFromPath(filePath, folder: folder);
     }
@@ -90,8 +94,8 @@ class StorageService {
   /// xảy ra khi Storage chưa commit xong object mà đã gọi getDownloadURL().
   static Future<String> uploadAudioForExam({
     required String examId,
-    Uint8List? bytes,   // Web: từ FilePicker.files.first.bytes
-    String? filePath,   // Mobile: từ FilePicker.files.first.path
+    Uint8List? bytes, // Web: từ FilePicker.files.first.bytes
+    String? filePath, // Mobile: từ FilePicker.files.first.path
     String? fileName,
   }) async {
     final ts = DateTime.now().millisecondsSinceEpoch;
@@ -122,9 +126,7 @@ class StorageService {
 
       // Kiểm tra trạng thái upload trước khi lấy URL
       if (snapshot.state != TaskState.success) {
-        throw Exception(
-          'Upload không thành công, state=${snapshot.state}',
-        );
+        throw Exception('Upload không thành công, state=${snapshot.state}');
       }
 
       // Chỉ gọi getDownloadURL() sau khi đã xác nhận upload thành công
@@ -141,7 +143,11 @@ class StorageService {
     String folder = 'avatars',
   }) async {
     if (kIsWeb && bytes != null) {
-      return uploadImageFromBytes(bytes, fileName ?? 'avatar.jpg', folder: folder);
+      return uploadImageFromBytes(
+        bytes,
+        fileName ?? 'avatar.jpg',
+        folder: folder,
+      );
     } else if (!kIsWeb && filePath != null) {
       return uploadImageFromPath(filePath, folder: folder);
     }

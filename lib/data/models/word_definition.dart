@@ -2,13 +2,13 @@ import 'dart:convert';
 
 class WordDefinition {
   final String word;
-  final String definition;    // Raw fallback (for backward compat)
-  final String wordType;      // noun, verb, adjective, phrase...
-  final String meaning;       // Nghĩa (tiếng Anh ngắn gọn)
-  final String explanation;   // Giải thích
-  final String example;       // Ví dụ (câu tiếng Việt)
+  final String definition; // Raw fallback (for backward compat)
+  final String wordType; // noun, verb, adjective, phrase...
+  final String meaning; // Nghĩa (tiếng Anh ngắn gọn)
+  final String explanation; // Giải thích
+  final String example; // Ví dụ (câu tiếng Việt)
   final String exampleTranslation; // Dịch ví dụ (tiếng Anh)
-  final List<String> synonyms;     // Từ đồng nghĩa
+  final List<String> synonyms; // Từ đồng nghĩa
 
   /// Kiểm tra xem data có phải dạng structured hay chỉ là raw text
   bool get isStructured =>
@@ -48,7 +48,11 @@ class WordDefinition {
       if (raw is String) {
         final cleaned = raw.trim();
         if (cleaned.isEmpty || cleaned.toLowerCase() == 'none') return [];
-        return cleaned.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+        return cleaned
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
       }
       return [];
     }
@@ -70,11 +74,22 @@ class WordDefinition {
     // ── Helper: parse synonyms from various formats ──
     List<String> parseSynonymsValue(dynamic raw) {
       if (raw == null) return [];
-      if (raw is List) return raw.map((e) => e.toString().trim()).where((s) => s.isNotEmpty).toList();
+      if (raw is List)
+        return raw
+            .map((e) => e.toString().trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
       if (raw is String) {
         final cleaned = raw.trim();
-        if (cleaned.isEmpty || cleaned.toLowerCase() == 'none' || cleaned.toLowerCase() == 'không có') return [];
-        return cleaned.split(RegExp(r'[,،、]')).map((s) => s.trim()).where((s) => s.isNotEmpty && s.toLowerCase() != 'none').toList();
+        if (cleaned.isEmpty ||
+            cleaned.toLowerCase() == 'none' ||
+            cleaned.toLowerCase() == 'không có')
+          return [];
+        return cleaned
+            .split(RegExp(r'[,،、]'))
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty && s.toLowerCase() != 'none')
+            .toList();
       }
       return [];
     }
@@ -100,14 +115,39 @@ class WordDefinition {
         // Import dart:convert được dùng ở đây
         final Map<String, dynamic> json = _parseJson(jsonStr);
 
-        final wordType = (json['Loại từ'] ?? json['loai_tu'] ?? json['wordType'] ?? '').toString().trim();
-        final meaning = (json['Nghĩa'] ?? json['nghia'] ?? json['meaning'] ?? '').toString().trim();
-        final explanation = (json['Giải thích'] ?? json['giai_thich'] ?? json['explanation'] ?? '').toString().trim();
-        final example = (json['Ví dụ'] ?? json['vi_du'] ?? json['example'] ?? '').toString().trim();
-        final exampleTranslation = (json['Dịch ví dụ'] ?? json['dich_vi_du'] ?? json['exampleTranslation'] ?? '').toString().trim();
-        final synonyms = parseSynonymsValue(json['Từ đồng nghĩa'] ?? json['tu_dong_nghia'] ?? json['synonyms']);
+        final wordType =
+            (json['Loại từ'] ?? json['loai_tu'] ?? json['wordType'] ?? '')
+                .toString()
+                .trim();
+        final meaning =
+            (json['Nghĩa'] ?? json['nghia'] ?? json['meaning'] ?? '')
+                .toString()
+                .trim();
+        final explanation =
+            (json['Giải thích'] ??
+                    json['giai_thich'] ??
+                    json['explanation'] ??
+                    '')
+                .toString()
+                .trim();
+        final example =
+            (json['Ví dụ'] ?? json['vi_du'] ?? json['example'] ?? '')
+                .toString()
+                .trim();
+        final exampleTranslation =
+            (json['Dịch ví dụ'] ??
+                    json['dich_vi_du'] ??
+                    json['exampleTranslation'] ??
+                    '')
+                .toString()
+                .trim();
+        final synonyms = parseSynonymsValue(
+          json['Từ đồng nghĩa'] ?? json['tu_dong_nghia'] ?? json['synonyms'],
+        );
 
-        if (wordType.isNotEmpty || meaning.isNotEmpty || explanation.isNotEmpty) {
+        if (wordType.isNotEmpty ||
+            meaning.isNotEmpty ||
+            explanation.isNotEmpty) {
           return WordDefinition(
             word: word,
             definition: rawText,

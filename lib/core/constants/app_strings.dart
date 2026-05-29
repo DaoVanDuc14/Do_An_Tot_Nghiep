@@ -3,7 +3,8 @@ class AppStrings {
   AppStrings._();
 
   static const String appName = 'Học Tiếng Việt AI';
-  static const String apiBase = 'https://vanduc14-vku-pronunciation-api.hf.space/api/v1';
+  static const String apiBase =
+      'https://vanduc14-vku-pronunciation-api.hf.space/api/v1';
   static const String evalEndpoint = '$apiBase/evaluate';
   static const String ttsEndpoint = '$apiBase/tts';
 

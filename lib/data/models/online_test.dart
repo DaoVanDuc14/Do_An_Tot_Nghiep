@@ -11,7 +11,7 @@ class OnlineTest {
   final String audioUrl;
   final String targetText;
   final List<String> options; // Chỉ dùng cho listeningMcq
-  final int timeLimit;        // Giới hạn thời gian (giây) - match Firebase field
+  final int timeLimit; // Giới hạn thời gian (giây) - match Firebase field
   final DateTime? createdAt;
 
   OnlineTest({
@@ -30,9 +30,10 @@ class OnlineTest {
     return OnlineTest(
       id: doc.id,
       title: data['title'] ?? '',
-      type: data['type'] == 'pronunciation'
-          ? TestType.pronunciation
-          : TestType.listeningMcq,
+      type:
+          data['type'] == 'pronunciation'
+              ? TestType.pronunciation
+              : TestType.listeningMcq,
       audioUrl: data['audioUrl'] ?? '',
       targetText: data['targetText'] ?? '',
       options: List<String>.from(data['options'] ?? []),
@@ -42,12 +43,12 @@ class OnlineTest {
   }
 
   Map<String, dynamic> toMap() => {
-        'title': title,
-        'type': type == TestType.pronunciation ? 'pronunciation' : 'listening_mcq',
-        'audioUrl': audioUrl,
-        'targetText': targetText,
-        'options': options,
-        'timeLimit': timeLimit,
-        'createdAt': Timestamp.now(),
-      };
+    'title': title,
+    'type': type == TestType.pronunciation ? 'pronunciation' : 'listening_mcq',
+    'audioUrl': audioUrl,
+    'targetText': targetText,
+    'options': options,
+    'timeLimit': timeLimit,
+    'createdAt': Timestamp.now(),
+  };
 }

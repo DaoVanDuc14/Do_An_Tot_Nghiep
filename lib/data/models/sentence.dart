@@ -31,9 +31,9 @@ class Sentence {
   }
 
   Map<String, dynamic> toMap() => {
-        'topicId': topicId,
-        'vietnamese': vietnamese,
-        'english': english,
-        'audioUrl': audioUrl,
-      };
+    'topicId': topicId,
+    'vietnamese': vietnamese,
+    'english': english,
+    'audioUrl': audioUrl,
+  };
 }

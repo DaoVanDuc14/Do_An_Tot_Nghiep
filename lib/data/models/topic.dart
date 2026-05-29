@@ -33,11 +33,11 @@ class Topic {
   }
 
   Map<String, dynamic> toMap() => {
-        'title': title,
-        'description': description,
-        'imageUrl': imageUrl,
-        'uid': uid,
-        'authorName': authorName,
-        'isPublic': isPublic,
-      };
+    'title': title,
+    'description': description,
+    'imageUrl': imageUrl,
+    'uid': uid,
+    'authorName': authorName,
+    'isPublic': isPublic,
+  };
 }

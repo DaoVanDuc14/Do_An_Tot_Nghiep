@@ -59,8 +59,12 @@ class _PronunciationRecorderWidgetState
 
   /// Dừng tất cả recorder/player — gọi khi chuyển câu hoặc dispose
   Future<void> _stopAll() async {
-    try { await _recorder.stop(); } catch (_) {}
-    try { await _player.stop(); } catch (_) {}
+    try {
+      await _recorder.stop();
+    } catch (_) {}
+    try {
+      await _player.stop();
+    } catch (_) {}
   }
 
   @override
@@ -131,32 +135,50 @@ class _PronunciationRecorderWidgetState
     }
   }
 
-  Widget _buildActionButton({required IconData icon, required Color color, required VoidCallback onTap, required String label}) {
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    required String label,
+  }) {
     return Column(
       children: [
         GestureDetector(
           onTap: onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            height: 64, width: 64,
+            height: 64,
+            width: 64,
             decoration: BoxDecoration(
-              color: color, 
-              shape: BoxShape.circle, 
+              color: color,
+              shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6))
-              ]
+                BoxShadow(
+                  color: color.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Icon(icon, color: Colors.white, size: 30),
           ),
         ),
         const SizedBox(height: 10),
-        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 14)),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildRecognizedWords() {
-    if (_result == null || _result!.recognizedText.isEmpty) return const SizedBox.shrink();
+    if (_result == null || _result!.recognizedText.isEmpty)
+      return const SizedBox.shrink();
 
     String targetText = _result!.targetText.toLowerCase();
     String recognizedText = _result!.recognizedText.toLowerCase();
@@ -176,7 +198,8 @@ class _PronunciationRecorderWidgetState
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: isCorrect ? const Color(0xFF4CAF50) : const Color(0xFFEF5350),
+            color:
+                isCorrect ? const Color(0xFF4CAF50) : const Color(0xFFEF5350),
             decoration: isCorrect ? null : TextDecoration.underline,
             decorationColor: const Color(0xFFEF5350),
             decorationThickness: 2,
@@ -187,7 +210,12 @@ class _PronunciationRecorderWidgetState
 
     return Column(
       children: [
-        Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: wordSpans),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: wordSpans,
+        ),
         const SizedBox(height: 24),
       ],
     );
@@ -195,84 +223,117 @@ class _PronunciationRecorderWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      // Kết quả text (chữ màu xanh/đỏ)
-      if (_result == null && !_isScoring)
-        const Padding(
-          padding: EdgeInsets.only(bottom: 24),
-          child: Text('Bấm nút ghi âm để bắt đầu đọc...', style: TextStyle(color: Colors.grey, fontSize: 16, fontStyle: FontStyle.italic)),
-        )
-      else if (_result != null)
-        _buildRecognizedWords(),
-
-      // Nút thu âm và nghe mẫu
-      if (_isScoring)
-        const Column(children: [
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 3),
-          ),
-          SizedBox(height: 8),
-          Text('Đang chấm điểm...',
-              style: TextStyle(color: AppColors.textSecondary)),
-        ])
-      else
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (widget.showListenSample) ...[
-              _buildActionButton(
-                icon: _isPlaying ? Icons.stop_rounded : Icons.volume_up_rounded, 
-                color: Colors.blue, 
-                onTap: _playTTS, 
-                label: "Nghe mẫu"
+    return Column(
+      children: [
+        // Kết quả text (chữ màu xanh/đỏ)
+        if (_result == null && !_isScoring)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 24),
+            child: Text(
+              'Bấm nút ghi âm để bắt đầu đọc...',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
               ),
-              const SizedBox(width: 50),
-            ],
-            _buildActionButton(
-              icon: _isRecording ? Icons.stop_rounded : Icons.mic_rounded, 
-              color: _isRecording ? Colors.red : const Color(0xFF00B4D8), 
-              onTap: _toggleRecording, 
-              label: _isRecording ? "Dừng" : "Ghi âm"
             ),
-          ],
-        ),
+          )
+        else if (_result != null)
+          _buildRecognizedWords(),
 
-      // Kết quả
-      if (_result != null) ...[
-        const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: BoxDecoration(
-            color: _result!.accuracy >= 80 ? Colors.green[50] : (_result!.accuracy >= 50 ? Colors.orange[50] : Colors.red[50]),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: _result!.accuracy >= 80 ? Colors.green : (_result!.accuracy >= 50 ? Colors.orange : Colors.red),
-              width: 1.5,
+        // Nút thu âm và nghe mẫu
+        if (_isScoring)
+          const Column(
+            children: [
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 3,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Đang chấm điểm...',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+          )
+        else
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.showListenSample) ...[
+                _buildActionButton(
+                  icon:
+                      _isPlaying ? Icons.stop_rounded : Icons.volume_up_rounded,
+                  color: Colors.blue,
+                  onTap: _playTTS,
+                  label: "Nghe mẫu",
+                ),
+                const SizedBox(width: 50),
+              ],
+              _buildActionButton(
+                icon: _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                color: _isRecording ? Colors.red : const Color(0xFF00B4D8),
+                onTap: _toggleRecording,
+                label: _isRecording ? "Dừng" : "Ghi âm",
+              ),
+            ],
+          ),
+
+        // Kết quả
+        if (_result != null) ...[
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color:
+                  _result!.accuracy >= 80
+                      ? Colors.green[50]
+                      : (_result!.accuracy >= 50
+                          ? Colors.orange[50]
+                          : Colors.red[50]),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color:
+                    _result!.accuracy >= 80
+                        ? Colors.green
+                        : (_result!.accuracy >= 50
+                            ? Colors.orange
+                            : Colors.red),
+                width: 1.5,
+              ),
+            ),
+            child: Text(
+              'Độ chính xác: ${_result!.accuracy}%',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color:
+                    _result!.accuracy >= 80
+                        ? Colors.green[700]
+                        : (_result!.accuracy >= 50
+                            ? Colors.orange[800]
+                            : Colors.red[700]),
+              ),
             ),
           ),
-          child: Text(
-            'Độ chính xác: ${_result!.accuracy}%',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: _result!.accuracy >= 80 ? Colors.green[700] : (_result!.accuracy >= 50 ? Colors.orange[800] : Colors.red[700]),
-            ),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed:
+                _isScoring
+                    ? null
+                    : () => setState(() {
+                      _result = null;
+                    }),
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text('Thu âm lại'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
           ),
-        ),
-        const SizedBox(height: 16),
-        TextButton.icon(
-          onPressed: _isScoring
-              ? null
-              : () => setState(() {
-                    _result = null;
-                  }),
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Thu âm lại'),
-          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-        ),
+        ],
       ],
-    ]);
+    );
   }
 }

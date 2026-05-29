@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -53,15 +52,23 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       if (_isLogin) {
-        await _auth.signInWithEmailAndPassword(email: email, password: password);
+        await _auth.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
       } else {
         final cred = await _auth.createUserWithEmailAndPassword(
-            email: email, password: password);
+          email: email,
+          password: password,
+        );
         await cred.user?.updateDisplayName(name);
         await FirestoreService.createUserProfile(cred.user!, name);
         await cred.user?.sendEmailVerification();
         if (mounted) {
-          _showSnack('🎉 Đăng ký thành công! Vui lòng kiểm tra email để xác minh.', Colors.green);
+          _showSnack(
+            '🎉 Đăng ký thành công! Vui lòng kiểm tra email để xác minh.',
+            Colors.green,
+          );
         }
       }
     } on FirebaseAuthException catch (e) {
@@ -110,18 +117,21 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isGoogleLoading = true);
     try {
       if (kIsWeb) {
-        final provider = GoogleAuthProvider()
-          ..addScope('email')
-          ..addScope('profile');
+        final provider =
+            GoogleAuthProvider()
+              ..addScope('email')
+              ..addScope('profile');
         final result = await _auth.signInWithPopup(provider);
         final fbUser = result.user;
         if (fbUser != null) {
           await FirestoreService.createUserProfileIfNotExists(fbUser);
         }
       } else {
-        final googleUser = await GoogleSignIn(
-          serverClientId: '291922863219-9k9rulfaildrk17fkfr26ii9p5rhd87h.apps.googleusercontent.com',
-        ).signIn();
+        final googleUser =
+            await GoogleSignIn(
+              serverClientId:
+                  '291922863219-9k9rulfaildrk17fkfr26ii9p5rhd87h.apps.googleusercontent.com',
+            ).signIn();
         if (googleUser == null) return;
 
         final googleAuth = await googleUser.authentication;
@@ -159,12 +169,14 @@ class _AuthScreenState extends State<AuthScreen> {
   // ─── SNACKBAR ──────────────────────────────────────────────
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: const TextStyle(color: Colors.white)),
-      backgroundColor: color,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(color: Colors.white)),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   // ─── QUÊN MẬT KHẨU ────────────────────────────────────────
@@ -173,57 +185,113 @@ class _AuthScreenState extends State<AuthScreen> {
     bool sending = false;
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Quên mật khẩu', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Nhập email tài khoản của bạn.\nChúng tôi sẽ gửi email đặt lại mật khẩu.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13), textAlign: TextAlign.center),
-          const SizedBox(height: 14),
-          TextField(
-            controller: emailCtrl,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Email', prefixIcon: const Icon(Icons.email_outlined),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+      builder:
+          (ctx) => StatefulBuilder(
+            builder:
+                (ctx, setD) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  title: const Text(
+                    'Quên mật khẩu',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Nhập email tài khoản của bạn.\nChúng tôi sẽ gửi email đặt lại mật khẩu.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text(
+                        'Hủy',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed:
+                          sending
+                              ? null
+                              : () async {
+                                final email = emailCtrl.text.trim();
+                                if (email.isEmpty) {
+                                  _showSnack(
+                                    'Vui lòng nhập email.',
+                                    Colors.orange,
+                                  );
+                                  return;
+                                }
+                                setD(() => sending = true);
+                                try {
+                                  await FirebaseAuth.instance
+                                      .sendPasswordResetEmail(email: email);
+                                  if (ctx.mounted) {
+                                    Navigator.pop(ctx);
+                                  }
+                                  _showSnack(
+                                    '📧 Đã gửi email đặt lại mật khẩu!\nVui lòng kiểm tra hộp thư (kể cả Spam).',
+                                    Colors.green,
+                                  );
+                                } on FirebaseAuthException catch (e) {
+                                  if (ctx.mounted) {
+                                    setD(() => sending = false);
+                                  }
+                                  _showSnack(_mapAuthError(e), Colors.red);
+                                } catch (e) {
+                                  if (ctx.mounted) {
+                                    setD(() => sending = false);
+                                  }
+                                  _showSnack('Lỗi: $e', Colors.red);
+                                }
+                              },
+                      child:
+                          sending
+                              ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Text(
+                                'Gửi email',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                    ),
+                  ],
+                ),
           ),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: sending ? null : () async {
-              final email = emailCtrl.text.trim();
-              if (email.isEmpty) {
-                _showSnack('Vui lòng nhập email.', Colors.orange);
-                return;
-              }
-              setD(() => sending = true);
-              try {
-                await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-                if (ctx.mounted) {
-                  Navigator.pop(ctx);
-                }
-                _showSnack('📧 Đã gửi email đặt lại mật khẩu!\nVui lòng kiểm tra hộp thư (kể cả Spam).', Colors.green);
-              } on FirebaseAuthException catch (e) {
-                if (ctx.mounted) {
-                  setD(() => sending = false);
-                }
-                _showSnack(_mapAuthError(e), Colors.red);
-              } catch (e) {
-                if (ctx.mounted) {
-                  setD(() => sending = false);
-                }
-                _showSnack('Lỗi: $e', Colors.red);
-              }
-            },
-            child: sending
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Gửi email', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      )),
     );
   }
 
@@ -253,17 +321,28 @@ class _AuthScreenState extends State<AuthScreen> {
                 children: [
                   // ── Logo & Header ──
                   _buildHeader()
-                    .animate()
-                    .fadeIn(duration: 600.ms)
-                    .slideY(begin: -0.1, end: 0, duration: 600.ms, curve: Curves.easeOut),
+                      .animate()
+                      .fadeIn(duration: 600.ms)
+                      .slideY(
+                        begin: -0.1,
+                        end: 0,
+                        duration: 600.ms,
+                        curve: Curves.easeOut,
+                      ),
 
                   const SizedBox(height: 28),
 
                   // ── Form Card ──
                   _buildFormCard()
-                    .animate()
-                    .fadeIn(duration: 600.ms, delay: 200.ms)
-                    .slideY(begin: 0.05, end: 0, duration: 600.ms, delay: 200.ms, curve: Curves.easeOut),
+                      .animate()
+                      .fadeIn(duration: 600.ms, delay: 200.ms)
+                      .slideY(
+                        begin: 0.05,
+                        end: 0,
+                        duration: 600.ms,
+                        delay: 200.ms,
+                        curve: Curves.easeOut,
+                      ),
                 ],
               ),
             ),
@@ -324,22 +403,25 @@ class _AuthScreenState extends State<AuthScreen> {
         children: [
           if (!_isLogin) ...[
             _buildTextField(
-                controller: _nameController,
-                icon: Icons.person_outline,
-                label: AppStrings.nameLabel),
+              controller: _nameController,
+              icon: Icons.person_outline,
+              label: AppStrings.nameLabel,
+            ),
             const SizedBox(height: 14),
           ],
           _buildTextField(
-              controller: _emailController,
-              icon: Icons.email_outlined,
-              label: AppStrings.emailLabel,
-              isEmail: true),
+            controller: _emailController,
+            icon: Icons.email_outlined,
+            label: AppStrings.emailLabel,
+            isEmail: true,
+          ),
           const SizedBox(height: 14),
           _buildTextField(
-              controller: _passwordController,
-              icon: Icons.lock_outline,
-              label: AppStrings.passwordLabel,
-              isPassword: true),
+            controller: _passwordController,
+            icon: Icons.lock_outline,
+            label: AppStrings.passwordLabel,
+            isPassword: true,
+          ),
           const SizedBox(height: 24),
 
           // ── Login / Register Button ──
@@ -366,36 +448,53 @@ class _AuthScreenState extends State<AuthScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
                 onPressed: _isLoading ? null : _submitAuth,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                    : Text(
-                        _isLogin ? AppStrings.login : AppStrings.register,
-                        style: const TextStyle(
+                child:
+                    _isLoading
+                        ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                        : Text(
+                          _isLogin ? AppStrings.login : AppStrings.register,
+                          style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
+                            color: Colors.white,
+                          ),
+                        ),
               ),
             ),
           ),
           const SizedBox(height: 20),
 
           // ── Divider ──
-          Row(children: [
-            Expanded(child: Container(height: 1, color: const Color(0xFFE8EFF5))),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('hoặc', style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
-            ),
-            Expanded(child: Container(height: 1, color: const Color(0xFFE8EFF5))),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: Container(height: 1, color: const Color(0xFFE8EFF5)),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'hoặc',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                ),
+              ),
+              Expanded(
+                child: Container(height: 1, color: const Color(0xFFE8EFF5)),
+              ),
+            ],
+          ),
           const SizedBox(height: 20),
 
           // ── Google Button ──
@@ -405,39 +504,52 @@ class _AuthScreenState extends State<AuthScreen> {
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFE8EFF5), width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 backgroundColor: Colors.white,
               ),
               onPressed: _isGoogleLoading ? null : _signInWithGoogle,
-              child: _isGoogleLoading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2.5))
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: const BoxDecoration(shape: BoxShape.circle),
-                          child: const Text('G',
+              child:
+                  _isGoogleLoading
+                      ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                      : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Text(
+                              'G',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4285F4))),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'Đăng nhập với Google',
-                          style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4285F4),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Đăng nhập với Google',
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary),
-                        ),
-                      ],
-                    ),
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
             ),
           ),
           const SizedBox(height: 16),
@@ -447,14 +559,25 @@ class _AuthScreenState extends State<AuthScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: _showForgotPassword,
-                child: const Text('Quên mật khẩu?', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                child: const Text(
+                  'Quên mật khẩu?',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ),
           TextButton(
             onPressed: () => setState(() => _isLogin = !_isLogin),
             child: Text(
-              _isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập',
-              style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+              _isLogin
+                  ? 'Chưa có tài khoản? Đăng ký ngay'
+                  : 'Đã có tài khoản? Đăng nhập',
+              style: const TextStyle(
+                color: AppColors.accent,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -479,20 +602,27 @@ class _AuthScreenState extends State<AuthScreen> {
         filled: true,
         fillColor: AppColors.background,
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        suffixIcon:
+            isPassword
+                ? IconButton(
+                  icon: Icon(
                     _obscurePassword
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: AppColors.textSecondary),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-              )
-            : null,
+                    color: AppColors.textSecondary,
+                  ),
+                  onPressed:
+                      () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                )
+                : null,
       ),
     );
   }

@@ -70,7 +70,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '291922863219',
     projectId: 'vku-vietnamese-learning',
     storageBucket: 'vku-vietnamese-learning.firebasestorage.app',
-    iosClientId: '291922863219-3rsk08eaohfgq1ibqfhnps16m07hqqru.apps.googleusercontent.com',
+    iosClientId:
+        '291922863219-3rsk08eaohfgq1ibqfhnps16m07hqqru.apps.googleusercontent.com',
     iosBundleId: 'com.vku.duclab.vkuLearningApp',
   );
 }

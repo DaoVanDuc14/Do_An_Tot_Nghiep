@@ -85,7 +85,10 @@ class FirestoreService {
   }
 
   /// Admin cập nhật thông tin user (name, role, avatarUrl).
-  static Future<void> updateUserByAdmin(String uid, Map<String, dynamic> data) async {
+  static Future<void> updateUserByAdmin(
+    String uid,
+    Map<String, dynamic> data,
+  ) async {
     await _db.collection(_users).doc(uid).update(data);
   }
 
@@ -97,15 +100,11 @@ class FirestoreService {
 
   // ─── TOPIC ────────────────────────────────────────────────
 
-  static Stream<QuerySnapshot> myTopicsStream(String uid) => _db
-      .collection(_topics)
-      .where('uid', isEqualTo: uid)
-      .snapshots();
+  static Stream<QuerySnapshot> myTopicsStream(String uid) =>
+      _db.collection(_topics).where('uid', isEqualTo: uid).snapshots();
 
-  static Stream<QuerySnapshot> publicTopicsStream() => _db
-      .collection(_topics)
-      .where('isPublic', isEqualTo: true)
-      .snapshots();
+  static Stream<QuerySnapshot> publicTopicsStream() =>
+      _db.collection(_topics).where('isPublic', isEqualTo: true).snapshots();
 
   static Future<void> createTopic(Map<String, dynamic> data) async {
     await _db.collection(_topics).add({...data, 'createdAt': Timestamp.now()});
@@ -117,10 +116,8 @@ class FirestoreService {
 
   static Future<void> deleteTopic(String id) async {
     // Xóa toàn bộ sentences bên trong
-    final sentences = await _db
-        .collection(_sentences)
-        .where('topicId', isEqualTo: id)
-        .get();
+    final sentences =
+        await _db.collection(_sentences).where('topicId', isEqualTo: id).get();
     for (var doc in sentences.docs) {
       await doc.reference.delete();
     }
@@ -129,16 +126,20 @@ class FirestoreService {
 
   // ─── SENTENCE ─────────────────────────────────────────────
 
-  static Stream<QuerySnapshot> sentencesStream(String topicId) => _db
-      .collection(_sentences)
-      .where('topicId', isEqualTo: topicId)
-      .snapshots();
+  static Stream<QuerySnapshot> sentencesStream(String topicId) =>
+      _db
+          .collection(_sentences)
+          .where('topicId', isEqualTo: topicId)
+          .snapshots();
 
   static Future<void> createSentence(Map<String, dynamic> data) async {
     await _db.collection(_sentences).add(data);
   }
 
-  static Future<void> updateSentence(String id, Map<String, dynamic> data) async {
+  static Future<void> updateSentence(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     await _db.collection(_sentences).doc(id).update(data);
   }
 
@@ -148,10 +149,15 @@ class FirestoreService {
 
   // ─── USER PROGRESS ────────────────────────────────────────
 
-  static Stream<DocumentSnapshot> progressStream(String uid, String sentenceId) =>
-      _db.collection(_userProgress).doc('${uid}_$sentenceId').snapshots();
+  static Stream<DocumentSnapshot> progressStream(
+    String uid,
+    String sentenceId,
+  ) => _db.collection(_userProgress).doc('${uid}_$sentenceId').snapshots();
 
-  static Stream<QuerySnapshot> topicProgressStream(String uid, String topicId) =>
+  static Stream<QuerySnapshot> topicProgressStream(
+    String uid,
+    String topicId,
+  ) =>
       _db
           .collection(_userProgress)
           .where('uid', isEqualTo: uid)
@@ -164,10 +170,7 @@ class FirestoreService {
     required String topicId,
     required int score,
   }) async {
-    await _db
-        .collection(_userProgress)
-        .doc('${uid}_$sentenceId')
-        .set({
+    await _db.collection(_userProgress).doc('${uid}_$sentenceId').set({
       'uid': uid,
       'sentenceId': sentenceId,
       'topicId': topicId,
@@ -178,19 +181,25 @@ class FirestoreService {
 
   // ─── ONLINE TEST ──────────────────────────────────────────
 
-  static Stream<QuerySnapshot> onlineTestsStream() => _db
-      .collection(_onlineTests)
-      .orderBy('createdAt', descending: true)
-      .snapshots();
+  static Stream<QuerySnapshot> onlineTestsStream() =>
+      _db
+          .collection(_onlineTests)
+          .orderBy('createdAt', descending: true)
+          .snapshots();
 
-  static Future<DocumentReference> createOnlineTest(Map<String, dynamic> data) async {
+  static Future<DocumentReference> createOnlineTest(
+    Map<String, dynamic> data,
+  ) async {
     return await _db.collection(_onlineTests).add({
       ...data,
       'createdAt': Timestamp.now(),
     });
   }
 
-  static Future<void> updateOnlineTest(String id, Map<String, dynamic> data) async {
+  static Future<void> updateOnlineTest(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     await _db.collection(_onlineTests).doc(id).update(data);
   }
 
@@ -229,10 +238,12 @@ class FirestoreService {
     required int timeFinished, // giây
     String testGroupId = 'general',
   }) async {
-    final prevQuery = await _db.collection(_testResults)
-        .where('userId', isEqualTo: uid)
-        .where('testGroupId', isEqualTo: testGroupId)
-        .get();
+    final prevQuery =
+        await _db
+            .collection(_testResults)
+            .where('userId', isEqualTo: uid)
+            .where('testGroupId', isEqualTo: testGroupId)
+            .get();
     int prevMax = 0;
     for (var doc in prevQuery.docs) {
       final s = doc.data()['totalScore'] as int? ?? 0;
@@ -240,13 +251,13 @@ class FirestoreService {
     }
 
     await _db.collection(_testResults).add({
-      'userId': uid,           // match Firebase: userId
-      'name': name,            // extra: dùng cho leaderboard
-      'totalScore': totalScore,// match Firebase: totalScore
+      'userId': uid, // match Firebase: userId
+      'name': name, // extra: dùng cho leaderboard
+      'totalScore': totalScore, // match Firebase: totalScore
       'totalQuestions': totalQuestions,
       'correctAnswers': correctAnswers,
       'timeFinished': timeFinished, // match Firebase: timeFinished
-      'testGroupId': testGroupId,   // match Firebase: testGroupId
+      'testGroupId': testGroupId, // match Firebase: testGroupId
       'createdAt': Timestamp.now(), // match Firebase: createdAt
     });
     // Cộng điểm phần chênh lệch (nếu điểm mới cao hơn)
@@ -256,20 +267,25 @@ class FirestoreService {
   }
 
   static Stream<QuerySnapshot> leaderboardStream({int limit = 50}) =>
-      _db.collection(_users)
+      _db
+          .collection(_users)
           .orderBy('totalScore', descending: true)
           .limit(limit)
           .snapshots();
 
   static Stream<QuerySnapshot> myResultsStream(String uid) =>
-      _db.collection(_testResults)
-          .where('userId', isEqualTo: uid)  // match Firebase: userId
+      _db
+          .collection(_testResults)
+          .where('userId', isEqualTo: uid) // match Firebase: userId
           .orderBy('createdAt', descending: true) // match Firebase: createdAt
           .snapshots();
 
   // ─── USER PROFILE ─────────────────────────────────────────
 
-  static Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
+  static Future<void> updateUserProfile(
+    String uid,
+    Map<String, dynamic> data,
+  ) async {
     await _db.collection(_users).doc(uid).set(data, SetOptions(merge: true));
   }
 
@@ -277,35 +293,58 @@ class FirestoreService {
 
   /// Bài thi đã publish (hiển thị cho user làm bài).
   static Stream<QuerySnapshot> examPapersStream() =>
-      _db.collection(_examPapers).orderBy('createdAt', descending: true).snapshots();
+      _db
+          .collection(_examPapers)
+          .orderBy('createdAt', descending: true)
+          .snapshots();
 
   /// Tất cả bài thi (cho admin quản lý tổng thể).
   static Stream<QuerySnapshot> allExamPapersStream() =>
-      _db.collection(_examPapers).orderBy('createdAt', descending: true).snapshots();
+      _db
+          .collection(_examPapers)
+          .orderBy('createdAt', descending: true)
+          .snapshots();
 
   /// Bài thi của 1 user cụ thể (user quản lý bài của mình).
-  static Stream<QuerySnapshot> myExamPapersStream(String uid) => _db
-      .collection(_examPapers)
-      .where('creatorId', isEqualTo: uid)
-      .snapshots();
+  static Stream<QuerySnapshot> myExamPapersStream(String uid) =>
+      _db
+          .collection(_examPapers)
+          .where('creatorId', isEqualTo: uid)
+          .snapshots();
 
-  static Future<DocumentReference> createExamPaper(Map<String, dynamic> data) async {
-    return await _db.collection(_examPapers).add({...data, 'createdAt': Timestamp.now()});
+  static Future<DocumentReference> createExamPaper(
+    Map<String, dynamic> data,
+  ) async {
+    return await _db.collection(_examPapers).add({
+      ...data,
+      'createdAt': Timestamp.now(),
+    });
   }
 
-  static Future<void> updateExamPaper(String id, Map<String, dynamic> data) async {
+  static Future<void> updateExamPaper(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     await _db.collection(_examPapers).doc(id).update(data);
   }
 
   /// Publish hoặc unpublish bài thi.
   static Future<void> setExamPaperPublished(String id, bool published) async {
-    await _db.collection(_examPapers).doc(id).update({'isPublished': published});
+    await _db.collection(_examPapers).doc(id).update({
+      'isPublished': published,
+    });
   }
 
   static Future<void> deleteExamPaper(String id) async {
     // Xóa toàn bộ câu hỏi trước
-    final qs = await _db.collection(_examQuestions).where('examPaperId', isEqualTo: id).get();
-    for (final doc in qs.docs) { await doc.reference.delete(); }
+    final qs =
+        await _db
+            .collection(_examQuestions)
+            .where('examPaperId', isEqualTo: id)
+            .get();
+    for (final doc in qs.docs) {
+      await doc.reference.delete();
+    }
     await _db.collection(_examPapers).doc(id).delete();
   }
 
@@ -324,16 +363,20 @@ class FirestoreService {
   /// Stream câu hỏi theo examPaperId.
   /// Không dùng orderBy('orderIndex') để tránh yêu cầu composite index.
   /// Sort ở client-side trong parseExamQuestions().
-  static Stream<QuerySnapshot> examQuestionsStream(String examPaperId) => _db
-      .collection(_examQuestions)
-      .where('examPaperId', isEqualTo: examPaperId)
-      .snapshots();
+  static Stream<QuerySnapshot> examQuestionsStream(String examPaperId) =>
+      _db
+          .collection(_examQuestions)
+          .where('examPaperId', isEqualTo: examPaperId)
+          .snapshots();
 
   static Future<void> createExamQuestion(Map<String, dynamic> data) async {
     await _db.collection(_examQuestions).add(data);
   }
 
-  static Future<void> updateExamQuestion(String id, Map<String, dynamic> data) async {
+  static Future<void> updateExamQuestion(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     await _db.collection(_examQuestions).doc(id).update(data);
   }
 
@@ -361,10 +404,12 @@ class FirestoreService {
     String? name,
     bool isAutoSubmit = false,
   }) async {
-    final prevQuery = await _db.collection(_testResults)
-        .where('userId', isEqualTo: userId)
-        .where('examPaperId', isEqualTo: examPaperId)
-        .get();
+    final prevQuery =
+        await _db
+            .collection(_testResults)
+            .where('userId', isEqualTo: userId)
+            .where('examPaperId', isEqualTo: examPaperId)
+            .get();
     int prevMax = 0;
     for (var doc in prevQuery.docs) {
       final s = doc.data()['score'] as int? ?? 0;
@@ -398,10 +443,12 @@ class FirestoreService {
     required int score,
     required int timeTakenSeconds,
   }) async {
-    final prevQuery = await _db.collection(_testResults)
-        .where('userId', isEqualTo: userId)
-        .where('examPaperId', isEqualTo: examPaperId)
-        .get();
+    final prevQuery =
+        await _db
+            .collection(_testResults)
+            .where('userId', isEqualTo: userId)
+            .where('examPaperId', isEqualTo: examPaperId)
+            .get();
     int prevMax = 0;
     for (var doc in prevQuery.docs) {
       final s = doc.data()['score'] as int? ?? 0;
@@ -420,16 +467,20 @@ class FirestoreService {
     }
   }
 
-  static Stream<QuerySnapshot> myExamResultsStream(String uid) => _db
-      .collection(_testResults)
-      .where('userId', isEqualTo: uid)
-      .orderBy('completedAt', descending: true)
-      .snapshots();
+  static Stream<QuerySnapshot> myExamResultsStream(String uid) =>
+      _db
+          .collection(_testResults)
+          .where('userId', isEqualTo: uid)
+          .orderBy('completedAt', descending: true)
+          .snapshots();
 
-  static Stream<QuerySnapshot> examLeaderboardStream(String examPaperId, {int limit = 100}) => _db
-      .collection(_testResults)
-      .where('examPaperId', isEqualTo: examPaperId)
-      .limit(limit)
-      .snapshots();
+  static Stream<QuerySnapshot> examLeaderboardStream(
+    String examPaperId, {
+    int limit = 100,
+  }) =>
+      _db
+          .collection(_testResults)
+          .where('examPaperId', isEqualTo: examPaperId)
+          .limit(limit)
+          .snapshots();
 }
-

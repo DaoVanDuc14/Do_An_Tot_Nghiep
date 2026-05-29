@@ -56,10 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 800),
     );
     _logoScale = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _logoController,
-        curve: Curves.elasticOut,
-      ),
+      CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
     );
     _logoFade = CurvedAnimation(
       parent: _logoController,
@@ -68,10 +65,9 @@ class _SplashScreenState extends State<SplashScreen>
     _logoSlide = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _logoController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeOutCubic),
+    );
 
     // ── Text entrance ──
     _textController = AnimationController(
@@ -85,10 +81,9 @@ class _SplashScreenState extends State<SplashScreen>
     _titleSlide = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _textController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
+    );
     _taglineFade = CurvedAnimation(
       parent: _textController,
       curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
@@ -96,12 +91,12 @@ class _SplashScreenState extends State<SplashScreen>
     _taglineSlide = Tween<Offset>(
       begin: const Offset(0, 0.4),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _textController,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
-    ));
-
-
+    ).animate(
+      CurvedAnimation(
+        parent: _textController,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
 
     // ── Particles ──
     _particleController = AnimationController(
@@ -109,8 +104,6 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(seconds: 6),
     )..repeat();
     _particles = List.generate(25, (_) => _Particle.random());
-
-
 
     // ── Pulse glow on logo ──
     _pulseController = AnimationController(
@@ -279,7 +272,9 @@ class _SplashScreenState extends State<SplashScreen>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryLight.withValues(alpha: _pulseAnimation.value),
+                      color: AppColors.primaryLight.withValues(
+                        alpha: _pulseAnimation.value,
+                      ),
                       blurRadius: 40,
                       spreadRadius: 4,
                       offset: const Offset(0, 4),
@@ -356,8 +351,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
   }
-
-
 }
 
 // ════════════════════════════════════════════════════════════════

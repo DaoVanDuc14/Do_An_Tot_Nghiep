@@ -55,7 +55,8 @@ class PronunciationService {
       for (int i = 0; i < rw.length; i++) {
         if (i < tw.length && rw[i] == tw[i]) correct++;
       }
-      final acc = tw.isEmpty ? 0 : ((correct / tw.length) * 100).round().clamp(0, 100);
+      final acc =
+          tw.isEmpty ? 0 : ((correct / tw.length) * 100).round().clamp(0, 100);
 
       return PronunciationResult(
         targetText: data['target_text'] ?? targetText,

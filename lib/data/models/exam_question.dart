@@ -28,9 +28,10 @@ class ExamQuestion {
     return ExamQuestion(
       id: doc.id,
       examPaperId: data['examPaperId'] ?? '',
-      type: data['type'] == 'pronunciation'
-          ? ExamQuestionType.pronunciation
-          : ExamQuestionType.mcq,
+      type:
+          data['type'] == 'pronunciation'
+              ? ExamQuestionType.pronunciation
+              : ExamQuestionType.mcq,
       targetText: data['targetText'] ?? '',
       options: List<String>.from(data['options'] ?? []),
       correctAnswer: data['correctAnswer'] ?? '',
@@ -39,12 +40,11 @@ class ExamQuestion {
   }
 
   Map<String, dynamic> toMap() => {
-        'examPaperId': examPaperId,
-        'type':
-            type == ExamQuestionType.pronunciation ? 'pronunciation' : 'mcq',
-        'targetText': targetText,
-        'options': options,
-        'correctAnswer': correctAnswer,
-        'orderIndex': orderIndex,
-      };
+    'examPaperId': examPaperId,
+    'type': type == ExamQuestionType.pronunciation ? 'pronunciation' : 'mcq',
+    'targetText': targetText,
+    'options': options,
+    'correctAnswer': correctAnswer,
+    'orderIndex': orderIndex,
+  };
 }
