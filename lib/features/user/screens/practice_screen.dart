@@ -31,6 +31,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   /// Track which sentences the user has practiced (recorded at least once)
   final Set<String> _practiced = {};
+  
+  /// Lưu kết quả ghi âm của mỗi câu để giữ lại khi chuyển câu
+  final Map<String, PronunciationResult> _resultsCache = {};
 
   @override
   void initState() {
@@ -819,10 +822,12 @@ class _PracticeScreenState extends State<PracticeScreen> {
                               key: ValueKey('pron_${sentence.id}'),
                               targetText: sentence.text,
                               recordId: 'practice_${sentence.id}',
+                              initialResult: _resultsCache[sentence.id],
                               showListenSample: true,
                               onResult: (result) {
                                 setState(() {
                                   _practiced.add(sentence.id);
+                                  _resultsCache[sentence.id] = result;
                                 });
                                 _saveProgress(result, sentence);
                               },
