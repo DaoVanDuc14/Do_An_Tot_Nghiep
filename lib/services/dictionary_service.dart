@@ -54,7 +54,7 @@ class DictionaryService {
   // HÀM GỌI LLM GEMINI (Sử dụng HTTP v1 Stable để đảm bảo không bị lỗi 404)
   // HÀM GỌI LLM GEMINI (Có cơ chế Retry và Fallback tự động)
   Future<String> _fetchFromLLM(String text) async {
-    const apiKey = "Dien_Vao";
+    const apiKey = "YOUR_HIDDEN_API_KEY";
     // Danh sách các model theo thứ tự ưu tiên
     // Nếu bản 2.5 flash bị quá tải (503) và 2.0 bị hết Quota (429)
     // Bản 2.5-flash-lite đã được kiểm tra là hoạt động tốt nhất hiện tại.

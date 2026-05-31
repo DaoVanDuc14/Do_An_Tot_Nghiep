@@ -20,10 +20,6 @@ class _AdminSentenceManagementState extends State<AdminSentenceManagement> {
     final vnCtrl = TextEditingController(
       text: isEdit ? sentence.vietnamese : '',
     );
-    final enCtrl = TextEditingController(text: isEdit ? sentence.english : '');
-    final audioCtrl = TextEditingController(
-      text: isEdit ? sentence.audioUrl : '',
-    );
     bool saving = false;
 
     showDialog(
@@ -56,26 +52,6 @@ class _AdminSentenceManagementState extends State<AdminSentenceManagement> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        TextField(
-                          controller: enCtrl,
-                          decoration: InputDecoration(
-                            labelText: 'Tiếng Anh',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        TextField(
-                          controller: audioCtrl,
-                          decoration: InputDecoration(
-                            labelText: 'Audio URL (tùy chọn)',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -98,8 +74,7 @@ class _AdminSentenceManagementState extends State<AdminSentenceManagement> {
                           saving
                               ? null
                               : () async {
-                                if (vnCtrl.text.isEmpty || enCtrl.text.isEmpty)
-                                  return;
+                                if (vnCtrl.text.isEmpty) return;
                                 setD(() => saving = true);
                                 try {
                                   if (isEdit) {
@@ -107,16 +82,12 @@ class _AdminSentenceManagementState extends State<AdminSentenceManagement> {
                                       sentence.id,
                                       {
                                         'vietnamese': vnCtrl.text.trim(),
-                                        'english': enCtrl.text.trim(),
-                                        'audioUrl': audioCtrl.text.trim(),
                                       },
                                     );
                                   } else {
                                     await FirestoreService.createSentence({
                                       'topicId': widget.topic.id,
                                       'vietnamese': vnCtrl.text.trim(),
-                                      'english': enCtrl.text.trim(),
-                                      'audioUrl': audioCtrl.text.trim(),
                                     });
                                   }
                                 } catch (e) {
@@ -277,10 +248,6 @@ class _AdminSentenceManagementState extends State<AdminSentenceManagement> {
                       fontSize: 16,
                       color: AppColors.primary,
                     ),
-                  ),
-                  subtitle: Text(
-                    s.english,
-                    style: const TextStyle(color: Colors.grey),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,

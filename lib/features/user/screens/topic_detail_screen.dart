@@ -24,7 +24,6 @@ class TopicDetailScreen extends StatelessWidget {
     final vnCtrl = TextEditingController(
       text: isEdit ? sentence.vietnamese : '',
     );
-    final enCtrl = TextEditingController(text: isEdit ? sentence.english : '');
     showDialog(
       context: context,
       builder:
@@ -52,17 +51,6 @@ class TopicDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: enCtrl,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'Tiếng Anh (tùy chọn)',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
               ],
             ),
             actions: [
@@ -82,14 +70,11 @@ class TopicDetailScreen extends StatelessWidget {
                     if (isEdit) {
                       await FirestoreService.updateSentence(sentence.id, {
                         'vietnamese': vnCtrl.text.trim(),
-                        'english': enCtrl.text.trim(),
                       });
                     } else {
                       await FirestoreService.createSentence({
                         'vietnamese': vnCtrl.text.trim(),
-                        'english': enCtrl.text.trim(),
                         'topicId': topic.id,
-                        'audioUrl': '',
                       });
                     }
                     if (ctx.mounted) Navigator.pop(ctx);
@@ -314,16 +299,6 @@ class TopicDetailScreen extends StatelessWidget {
                                                         AppColors.textPrimary,
                                                   ),
                                                 ),
-                                                if (s.english.isNotEmpty)
-                                                  Text(
-                                                    s.english,
-                                                    style: const TextStyle(
-                                                      fontSize: 13,
-                                                      color:
-                                                          AppColors
-                                                              .textSecondary,
-                                                    ),
-                                                  ),
                                               ],
                                             ),
                                           ),
