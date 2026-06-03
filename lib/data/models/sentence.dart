@@ -5,11 +5,7 @@ class Sentence {
   final String topicId;
   final String vietnamese;
 
-  Sentence({
-    required this.id,
-    required this.topicId,
-    required this.vietnamese,
-  });
+  Sentence({required this.id, required this.topicId, required this.vietnamese});
 
   // Alias để không vỡ code cũ đang gọi sentence.text
   String get text => vietnamese;

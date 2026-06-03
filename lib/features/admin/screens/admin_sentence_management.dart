@@ -80,9 +80,7 @@ class _AdminSentenceManagementState extends State<AdminSentenceManagement> {
                                   if (isEdit) {
                                     await FirestoreService.updateSentence(
                                       sentence.id,
-                                      {
-                                        'vietnamese': vnCtrl.text.trim(),
-                                      },
+                                      {'vietnamese': vnCtrl.text.trim()},
                                     );
                                   } else {
                                     await FirestoreService.createSentence({

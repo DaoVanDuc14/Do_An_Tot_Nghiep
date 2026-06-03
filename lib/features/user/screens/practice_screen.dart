@@ -31,7 +31,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   /// Track which sentences the user has practiced (recorded at least once)
   final Set<String> _practiced = {};
-  
+
   /// Lưu kết quả ghi âm của mỗi câu để giữ lại khi chuyển câu
   final Map<String, PronunciationResult> _resultsCache = {};
 
@@ -902,9 +902,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed:
-                    _idx < total - 1
-                        ? () => setState(() => _idx++)
-                        : null,
+                    _idx < total - 1 ? () => setState(() => _idx++) : null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: AppColors.primary,
@@ -912,10 +910,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                ),
+                icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                 label: const Text(
                   'Tiếp theo',
                   style: TextStyle(color: Colors.white),

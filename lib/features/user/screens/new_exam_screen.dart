@@ -58,7 +58,7 @@ class _NewExamScreenState extends State<NewExamScreen> {
     if (mounted) setState(() => _isAudioPlaying = true);
     try {
       final url =
-          'https://vanduc14-vku-pronunciation-api.hf.space/api/v1/tts?text=${Uri.encodeComponent(text)}';
+          'http://116.118.2.137:8000/api/v1/tts?text=${Uri.encodeComponent(text)}';
       await _audioPlayer.play(UrlSource(url));
     } catch (e) {
       if (mounted) setState(() => _isAudioPlaying = false);

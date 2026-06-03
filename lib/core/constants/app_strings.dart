@@ -2,9 +2,9 @@
 class AppStrings {
   AppStrings._();
 
-  static const String appName = 'Học Tiếng Việt AI';
-  static const String apiBase =
-      'https://vanduc14-vku-pronunciation-api.hf.space/api/v1';
+  static const String appName = 'VGo';
+  // Thay đổi từ link Hugging Face sang HTTP + IP VPS + Port 8000
+  static const String apiBase = 'http://116.118.2.137:8000/api/v1';
   static const String evalEndpoint = '$apiBase/evaluate';
   static const String ttsEndpoint = '$apiBase/tts';
 
