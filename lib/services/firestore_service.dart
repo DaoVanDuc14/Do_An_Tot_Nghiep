@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../data/models/topic.dart';
 import '../data/models/sentence.dart';
-import '../data/models/online_test.dart';
 import '../data/models/exam_paper.dart';
 import '../data/models/exam_question.dart';
 
@@ -16,7 +15,6 @@ class FirestoreService {
   static const _users = 'users';
   static const _topics = 'topics';
   static const _sentences = 'sentences';
-  static const _onlineTests = 'online_tests';
   static const _userProgress = 'user_progress';
   static const _testResults = 'test_results';
   static const _examPapers = 'exam_papers';
@@ -179,34 +177,6 @@ class FirestoreService {
     });
   }
 
-  // ─── ONLINE TEST ──────────────────────────────────────────
-
-  static Stream<QuerySnapshot> onlineTestsStream() =>
-      _db
-          .collection(_onlineTests)
-          .orderBy('createdAt', descending: true)
-          .snapshots();
-
-  static Future<DocumentReference> createOnlineTest(
-    Map<String, dynamic> data,
-  ) async {
-    return await _db.collection(_onlineTests).add({
-      ...data,
-      'createdAt': Timestamp.now(),
-    });
-  }
-
-  static Future<void> updateOnlineTest(
-    String id,
-    Map<String, dynamic> data,
-  ) async {
-    await _db.collection(_onlineTests).doc(id).update(data);
-  }
-
-  static Future<void> deleteOnlineTest(String id) async {
-    await _db.collection(_onlineTests).doc(id).delete();
-  }
-
   /// Lấy tên topic (dùng cho thống kê).
   static Future<String> getTopicTitle(String topicId) async {
     if (topicId.isEmpty) return 'Không có';
@@ -216,10 +186,6 @@ class FirestoreService {
     if (data == null) return 'Không có tiêu đề';
     return data['title'] ?? 'Không có tiêu đề';
   }
-
-  /// Helper để parse OnlineTest từ snapshot
-  static List<OnlineTest> parseOnlineTests(QuerySnapshot snap) =>
-      snap.docs.map((doc) => OnlineTest.fromFirestore(doc)).toList();
 
   static List<Topic> parseTopics(QuerySnapshot snap) =>
       snap.docs.map((doc) => Topic.fromFirestore(doc)).toList();

@@ -617,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildOnlineTestTab() {
+  Widget _buildExamTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirestoreService.examPapersStream(),
       builder: (context, snap) {
@@ -1406,7 +1406,7 @@ class _HomeScreenState extends State<HomeScreen>
             FirestoreService.publicTopicsStream(),
             isExplore: true,
           ),
-          _buildOnlineTestTab(),
+          _buildExamTab(),
         ],
       ),
     );
