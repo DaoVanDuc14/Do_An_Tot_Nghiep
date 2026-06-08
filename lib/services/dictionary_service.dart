@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import '../data/models/word_definition.dart';
+import '../core/constants/app_strings.dart';
 
 class DictionaryService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
