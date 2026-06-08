@@ -7,6 +7,7 @@ class AppStrings {
   static const String apiBase = 'http://116.118.2.137:8000/api/v1';
   static const String evalEndpoint = '$apiBase/evaluate';
   static const String ttsEndpoint = '$apiBase/tts';
+  static const String dictionaryEndpoint = '$apiBase/dictionary';
 
   // Auth
   static const String login = 'Đăng Nhập';
