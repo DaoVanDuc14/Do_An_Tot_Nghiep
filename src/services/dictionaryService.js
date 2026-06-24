@@ -2,7 +2,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 const GEMINI_API_KEY = 'AIzaSyAFYx84TkM4LDRNO1EXiGHgylsgLmCWkaI';
-const GEMINI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+const GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro'];
 
 /**
  * Get word definition: cache-first (Firestore) → LLM fallback (Gemini)
@@ -28,52 +28,90 @@ export async function getDefinition(text) {
     console.warn('Cache read failed:', e);
   }
 
-  // 2. Gemini API fallback
-  for (const model of GEMINI_MODELS) {
+  // 2. Gọi API từ VPS (Giống hệ thống App)
+  try {
+    const url = 'http://116.118.2.137:8000/api/v1/dictionary';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: cleanText }),
+    });
+
+    if (!response.ok) throw new Error('Lỗi từ VPS API');
+
+    const json = await response.json();
+    if (json.detail) throw new Error(json.detail);
+    
+    const content = json.definition || '';
+
+    let parsed = {};
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch(e) {}
+    }
+
+    const definition = parsed.definition || parsed['Nghĩa'] || parsed['Giải thích'] || content.replace(/```json/g, '').replace(/```/g, '').trim();
+    const phonetic = parsed.phonetic || parsed['Phiên âm'] || '';
+
+    const result = {
+      word: parsed.word || cleanText,
+      definition: definition || 'Không tìm thấy định nghĩa',
+      phonetic: phonetic,
+    };
+
+    // 3. Save to Firestore cache
     try {
-      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-      const prompt = `Bạn là một từ điển Việt-Anh học thuật. Hãy định nghĩa từ/cụm từ '${cleanText}' bằng tiếng Anh. Trả lời theo format JSON: {"word":"...","definition":"...","phonetic":"..."}. Chỉ trả về JSON, không giải thích thêm.`;
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
+      await setDoc(doc(db, 'dictionary', cleanText), {
+        ...result,
+        updatedAt: serverTimestamp(),
       });
+    } catch (e) {}
 
-      if (!response.ok) continue;
-
-      const json = await response.json();
-      const content = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      // Parse JSON from response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) continue;
-
-      const parsed = JSON.parse(jsonMatch[0]);
+    return result;
+  } catch (vpsError) {
+    console.warn(`VPS Dictionary API failed, trying Google Translate fallback:`, vpsError);
+    
+    // 3. Google Translate Fallback
+    try {
+      const gtUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&dt=bd&q=${encodeURIComponent(cleanText)}`;
+      const gtRes = await fetch(gtUrl);
+      if (!gtRes.ok) throw new Error('Google Translate API failed');
+      const gtJson = await gtRes.json();
+      
+      let translated = '';
+      if (gtJson[0] && gtJson[0][0] && gtJson[0][0][0]) {
+        translated = gtJson[0][0][0];
+      }
+      
+      let parts = [];
+      if (gtJson[1] && gtJson[1].length > 0) {
+        gtJson[1].forEach(pos => {
+           const type = pos[0] || 'word';
+           const terms = (pos[1] || []).join(', ');
+           parts.push({ type, terms });
+        });
+      }
+      
       const result = {
-        word: parsed.word || cleanText,
-        definition: parsed.definition || 'Không tìm thấy định nghĩa',
-        phonetic: parsed.phonetic || '',
+        word: cleanText,
+        definition: translated, // Primary translation
+        phonetic: '',
+        parts: parts // Structured parts of speech
       };
-
-      // 3. Save to Firestore cache
+      
       try {
         await setDoc(doc(db, 'dictionary', cleanText), {
           ...result,
           updatedAt: serverTimestamp(),
         });
-      } catch (e) {
-        console.warn('Cache write failed:', e);
-      }
-
+      } catch (e) {}
+      
       return result;
-    } catch (e) {
-      console.warn(`Gemini ${model} failed:`, e);
-      continue;
+    } catch (gtError) {
+      console.warn(`Google Translate Fallback failed:`, gtError);
+      throw new Error('Không thể tra từ điển lúc này');
     }
   }
-
-  throw new Error('Không thể tra từ điển lúc này');
 }

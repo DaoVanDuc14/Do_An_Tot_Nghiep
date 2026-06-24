@@ -22,7 +22,6 @@ export default function AdminTopicManagement() {
   const [showSDialog, setShowSDialog] = useState(false);
   const [editS, setEditS] = useState(null);
   const [vnText, setVnText] = useState('');
-  const [enText, setEnText] = useState('');
 
   useEffect(() => {
     const unsub = FS.allTopicsStream((snap) => {
@@ -67,16 +66,15 @@ export default function AdminTopicManagement() {
   const openSDialog = (s = null) => {
     setEditS(s);
     setVnText(s?.vietnamese || '');
-    setEnText(s?.english || '');
     setShowSDialog(true);
   };
 
   const saveSentence = async () => {
     if (!vnText.trim()) return;
     if (editS) {
-      await FS.updateSentence(editS.id, { vietnamese: vnText.trim(), english: enText.trim() });
+      await FS.updateSentence(editS.id, { vietnamese: vnText.trim() });
     } else {
-      await FS.createSentence({ vietnamese: vnText.trim(), english: enText.trim(), topicId: selectedTopic.id, audioUrl: '' });
+      await FS.createSentence({ vietnamese: vnText.trim(), topicId: selectedTopic.id, audioUrl: '' });
     }
     setShowSDialog(false);
   };
@@ -99,7 +97,6 @@ export default function AdminTopicManagement() {
             <div key={s.id} className="card" style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.vietnamese}</p>
-                {s.english && <p style={{ fontSize: 13, color: AppColors.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.english}</p>}
               </div>
               <button className="btn-icon" style={{ width: 32, height: 32 }} onClick={() => openSDialog(s)}><FiEdit2 size={15} color="#2196F3" /></button>
               <button className="btn-icon" style={{ width: 32, height: 32 }} onClick={() => FS.deleteSentence(s.id)}><FiTrash2 size={15} color={AppColors.error} /></button>
@@ -116,8 +113,7 @@ export default function AdminTopicManagement() {
             <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSDialog(false)}>
               <motion.div className="modal-content" initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} onClick={e => e.stopPropagation()}>
                 <h3 className="modal-title">{editS ? 'Sửa câu' : 'Thêm câu'}</h3>
-                <textarea className="input-field" placeholder="Tiếng Việt" rows={2} value={vnText} onChange={e => setVnText(e.target.value)} style={{ marginBottom: 12 }} />
-                <textarea className="input-field" placeholder="Tiếng Anh" rows={2} value={enText} onChange={e => setEnText(e.target.value)} />
+                <textarea className="input-field" placeholder="Tiếng Việt" rows={3} value={vnText} onChange={e => setVnText(e.target.value)} style={{ marginBottom: 16 }} />
                 <div className="modal-actions">
                   <button className="btn btn-secondary" onClick={() => setShowSDialog(false)}>Hủy</button>
                   <button className="btn btn-primary" onClick={saveSentence}>Lưu</button>

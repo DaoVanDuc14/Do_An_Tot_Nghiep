@@ -37,7 +37,6 @@ export default function TopicDetailScreen() {
   const [showDialog, setShowDialog] = useState(false);
   const [editSentence, setEditSentence] = useState(null);
   const [vnText, setVnText] = useState('');
-  const [enText, setEnText] = useState('');
   const [delSentence, setDelSentence] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
 
@@ -65,16 +64,15 @@ export default function TopicDetailScreen() {
   const openDialog = (s = null) => {
     setEditSentence(s);
     setVnText(s?.vietnamese || '');
-    setEnText(s?.english || '');
     setShowDialog(true);
   };
 
   const saveSentence = async () => {
     if (!vnText.trim()) return;
     if (editSentence) {
-      await FS.updateSentence(editSentence.id, { vietnamese: vnText.trim(), english: enText.trim() });
+      await FS.updateSentence(editSentence.id, { vietnamese: vnText.trim() });
     } else {
-      await FS.createSentence({ vietnamese: vnText.trim(), english: enText.trim(), topicId: id, audioUrl: '' });
+      await FS.createSentence({ vietnamese: vnText.trim(), topicId: id, audioUrl: '' });
     }
     setShowDialog(false);
   };
@@ -135,7 +133,6 @@ export default function TopicDetailScreen() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 16, fontWeight: 600, color: AppColors.textPrimary }}>{s.vietnamese}</p>
-                  {s.english && <p style={{ fontSize: 13, color: AppColors.textSecondary }}>{s.english}</p>}
                 </div>
                 <ScoreCircle score={scores[s.id] || 0} />
                 {isOwner && (
@@ -181,8 +178,7 @@ export default function TopicDetailScreen() {
             <motion.div className="modal-content" initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} onClick={e => e.stopPropagation()}>
               <h3 className="modal-title">{editSentence ? 'Sửa Câu Nói' : 'Thêm Câu Nói'}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <textarea className="input-field" placeholder="Tiếng Việt" rows={2} value={vnText} onChange={e => setVnText(e.target.value)} />
-                <textarea className="input-field" placeholder="Tiếng Anh (tùy chọn)" rows={2} value={enText} onChange={e => setEnText(e.target.value)} />
+                <textarea className="input-field" placeholder="Tiếng Việt" rows={3} value={vnText} onChange={e => setVnText(e.target.value)} />
               </div>
               <div className="modal-actions">
                 <button className="btn btn-secondary" onClick={() => setShowDialog(false)}>Hủy</button>

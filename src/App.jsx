@@ -18,6 +18,7 @@ import AdminDashboard from './features/admin/screens/AdminDashboard';
 import AdminUserManagement from './features/admin/screens/AdminUserManagement';
 import AdminExamManagement from './features/admin/screens/AdminExamManagement';
 import AdminTopicManagement from './features/admin/screens/AdminTopicManagement';
+import AdminExamResultsScreen from './features/admin/screens/AdminExamResultsScreen';
 
 import './index.css';
 
@@ -99,6 +100,7 @@ function AppRoutes() {
       <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUserManagement /></ProtectedRoute>} />
       <Route path="/admin/exams" element={<ProtectedRoute requireAdmin><AdminExamManagement /></ProtectedRoute>} />
       <Route path="/admin/topics" element={<ProtectedRoute requireAdmin><AdminTopicManagement /></ProtectedRoute>} />
+      <Route path="/admin/exam-results/:paperId" element={<ProtectedRoute requireAdmin><AdminExamResultsScreen /></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

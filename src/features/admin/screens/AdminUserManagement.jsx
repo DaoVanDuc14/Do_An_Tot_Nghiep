@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiArrowLeft, FiSearch, FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiSearch, FiEdit2, FiTrash2, FiX, FiMail } from 'react-icons/fi';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../../../firebaseConfig';
 import { AppColors } from '../../../core/constants/appColors';
 import * as FS from '../../../services/firestoreService';
 
@@ -40,6 +42,16 @@ export default function AdminUserManagement() {
     await FS.updateUserByAdmin(editUser.id, { name: editName.trim(), role: editRole });
     setSaving(false);
     setEditUser(null);
+  };
+
+  const sendResetEmail = async (email) => {
+    if (!email) return;
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert(`✅ Đã gửi email đặt lại mật khẩu tới ${email}`);
+    } catch (e) {
+      alert(`❌ Lỗi gửi email: ${e.message}`);
+    }
   };
 
   const deleteUser = async () => {
@@ -108,6 +120,27 @@ export default function AdminUserManagement() {
                   <option value="admin">admin</option>
                 </select>
               </div>
+              {editUser.email && (
+                <>
+                  <hr style={{ margin: '16px 0', border: 'none', borderTop: '1px solid #E8EDF5' }} />
+                  <button
+                    className="btn"
+                    style={{
+                      width: '100%', padding: 12, fontSize: 14, fontWeight: 600,
+                      background: 'linear-gradient(135deg, #00B4D8, #0077B6)',
+                      color: 'white', border: 'none', borderRadius: 12,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', gap: 8,
+                    }}
+                    onClick={() => sendResetEmail(editUser.email)}
+                  >
+                    <FiMail size={16} /> Gửi Email Đặt Lại Mật Khẩu
+                  </button>
+                  <p style={{ fontSize: 11, color: AppColors.textSecondary, textAlign: 'center', marginTop: 6 }}>
+                    Người dùng sẽ nhận được email có link để tự đổi mật khẩu an toàn.
+                  </p>
+                </>
+              )}
               <div className="modal-actions">
                 <button className="btn btn-secondary" onClick={() => setEditUser(null)}>Hủy</button>
                 <button className="btn btn-primary" onClick={saveUser} disabled={saving}>{saving ? '...' : 'Lưu'}</button>

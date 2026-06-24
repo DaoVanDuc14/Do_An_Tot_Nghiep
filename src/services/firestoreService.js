@@ -111,6 +111,13 @@ export function parseTopics(snapshot) {
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
+export async function getTopicTitle(topicId) {
+  if (!topicId) return 'Không có';
+  const snap = await getDoc(doc(db, 'topics', topicId));
+  if (!snap.exists()) return 'Không tìm thấy';
+  return snap.data().title || 'Không có tiêu đề';
+}
+
 // ═══════════════════════════════════════════════
 //  SENTENCES
 // ═══════════════════════════════════════════════

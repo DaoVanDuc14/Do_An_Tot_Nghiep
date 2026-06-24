@@ -12,8 +12,6 @@ export default function AdminExamManagement() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [delPaper, setDelPaper] = useState(null);
-  const [viewResults, setViewResults] = useState(null);
-  const [results, setResults] = useState([]);
 
   useEffect(() => {
     const unsub = FS.allExamPapersStream((snap) => {
@@ -22,14 +20,6 @@ export default function AdminExamManagement() {
     });
     return unsub;
   }, []);
-
-  useEffect(() => {
-    if (!viewResults) return;
-    const unsub = FS.examLeaderboardStream(viewResults.id, (snap) => {
-      setResults(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-    return unsub;
-  }, [viewResults]);
 
   const filtered = papers.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
 
@@ -40,48 +30,6 @@ export default function AdminExamManagement() {
   const deletePaper = async () => {
     if (delPaper) { await FS.deleteExamPaper(delPaper.id); setDelPaper(null); }
   };
-
-  // ── Results view ──
-  if (viewResults) {
-    return (
-      <div style={{ minHeight: '100vh', background: AppColors.background, display: 'flex', flexDirection: 'column' }}>
-        <div className="gradient-header">
-          <button className="back-btn" onClick={() => setViewResults(null)}><FiArrowLeft size={22} /></button>
-          <h2>Kết quả: {viewResults.title}</h2>
-          <div style={{ width: 48 }} />
-        </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 0' }}>
-          <div className="page-container">
-          {results.length === 0 ? (
-            <div className="empty-state"><p>Chưa có kết quả nào.</p></div>
-          ) : <div className="content-grid">
-            {results.map((r, i) => (
-            <div key={r.id} className="card" style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                background: i < 3 ? AppColors.primary : AppColors.background,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: i < 3 ? 'white' : AppColors.textSecondary, fontWeight: 700, fontSize: 13,
-              }}>
-                {i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || 'Ẩn danh'}</p>
-                <p style={{ fontSize: 12, color: AppColors.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {r.score} điểm • {r.totalQuestions} câu • {Math.floor((r.durationSeconds || 0) / 60)}p{(r.durationSeconds || 0) % 60}s
-                </p>
-              </div>
-              <span style={{ fontSize: 20, fontWeight: 800, color: r.score >= (r.totalQuestions || 1) * 8 ? AppColors.success : AppColors.warning }}>
-                {r.score}
-              </span>
-            </div>
-            ))}
-          </div>}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ── Papers list ──
   return (
@@ -126,7 +74,7 @@ export default function AdminExamManagement() {
               <button className={`btn ${p.isPublished ? 'btn-secondary' : 'btn-primary'}`} style={{ flex: 1, padding: 10, fontSize: 13 }} onClick={() => togglePublish(p)}>
                 {p.isPublished ? <><FiEyeOff size={14} /> Ẩn</> : <><FiEye size={14} /> Xuất bản</>}
               </button>
-              <button className="btn btn-secondary" style={{ flex: 1, padding: 10, fontSize: 13 }} onClick={() => setViewResults(p)}>
+              <button className="btn btn-secondary" style={{ flex: 1, padding: 10, fontSize: 13 }} onClick={() => navigate(`/admin/exam-results/${p.id}`)}>
                 📊 Kết quả
               </button>
               <button className="btn btn-danger" style={{ padding: 10, fontSize: 13 }} onClick={() => setDelPaper(p)}>
